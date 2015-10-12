@@ -21,6 +21,8 @@ requires = [
     "transaction",
     "zope.sqlalchemy",
     "waitress",
+    "WebTest",
+    "requests",
     ]
 
 setup(name="pdfexploder",
