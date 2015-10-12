@@ -1,5 +1,5 @@
 # PDFExploder
-[![Build Status](https://api.travis-ci.org/WasatchPhotonics/PDFExploder.png?branch=master)](http://travis-ci.org/WasatchPhotonics/PDFExploder) [![Coverage Status](https://coveralls.io/repos/WasatchPhotonics/PDFExpolder/badge.svg?branch=master&service=github)](https://coveralls.io/github/WasatchPhotonics/PDFExpolder?branch=master)
+[![Build Status](https://api.travis-ci.org/WasatchPhotonics/PDFExploder.png?branch=master)](http://travis-ci.org/WasatchPhotonics/PDFExploder) [![Coverage Status](https://coveralls.io/repos/WasatchPhotonics/PDFExploder/badge.svg?branch=master&service=github)](https://coveralls.io/github/WasatchPhotonics/PDFExploder?branch=master)
 
 Web service to create thumbnail views of PDF documents
 
