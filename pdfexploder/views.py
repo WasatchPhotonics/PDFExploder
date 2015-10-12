@@ -1,5 +1,10 @@
-from pyramid.response import Response
+from pyramid.response import Response, FileResponse
 from pyramid.view import view_config
+
+import logging
+
+from slugify import slugify
+
 
 from sqlalchemy.exc import DBAPIError
 
@@ -7,6 +12,8 @@ from .models import (
     DBSession,
     MyModel,
     )
+
+log = logging.getLogger()
 
 
 @view_config(route_name='home', renderer='templates/mytemplate.pt')
@@ -29,12 +36,18 @@ class ThumbnailViews:
         """ slugify the parameters to prevent relative path names in the
         system.
         """
-        return
+        log.info("Pre-sanitize: ", self.request.matchdict["serial"])
+
+        serial = self.request.matchdict["serial"]
+        self.request.matchdict["serial"] = slugify(serial)
+
+        log.info("post-sanitize: ", self.request.matchdict["serial"])
 
     @view_config(route_name="top_page_thumbnail")
     def top_page_thumbnail(request):
 
-        return 
+        location = "database/imagery/top_page_placeholder.png"
+        return FileResponse(location)
 
 conn_err_msg = """\
 Pyramid is having a problem using your SQL database.  The problem

@@ -1,3 +1,4 @@
+import os
 import unittest
 import transaction
 
@@ -49,7 +50,10 @@ class TestThumbnailView(unittest.TestCase):
         inst = ThumbnailViews(request)
         view_back = inst.top_page_thumbnail()
 
-        self.assertEqual(len(view_back.body), 1234)
+        # Get size of actual file on disk, compare
+        file_name = "database/imagery/top_page_placeholder.png"
+        actual_size = os.path.getsize(file_name)
+        self.assertEqual(len(view_back.body), actual_size)
         
 
 class TestMyViewFailureCondition(unittest.TestCase):
