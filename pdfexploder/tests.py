@@ -69,9 +69,12 @@ class TestThumbnailView(unittest.TestCase):
     def setUp(self):
         # Clean any existing test files
         self.clean_test_files()
+        self.config = testing.setUp()
+        register_routes(self.config)
 
     def tearDown(self):
         self.clean_test_files()
+        testing.tearDown()
 
     def clean_test_files(self):
         # Remove the directory if it exists
