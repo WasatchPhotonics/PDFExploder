@@ -170,3 +170,9 @@ class FunctionalTests(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertTrue("pdfexploder" in res.body)
 
+    def test_top_level_image(self):
+        # Get placeholder on no serial specified
+        
+
+        # Get the placeholder on bad serial specified
+        pass
