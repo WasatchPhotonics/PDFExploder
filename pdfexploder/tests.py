@@ -7,6 +7,8 @@ import transaction
 
 from pyramid import testing
 
+from webtest import TestApp, Upload
+
 from .models import DBSession
 
 log = logging.getLogger()                                                             
@@ -16,6 +18,26 @@ strm = logging.StreamHandler(sys.stderr)
 frmt = logging.Formatter("%(name)s - %(levelname)s %(message)s")                      
 strm.setFormatter(frmt)                                                               
 log.addHandler(strm)    
+
+
+def register_routes(config):
+    """ match the configuration in __init__ (a pyramid tutorials
+    convention), to allow the unit tests to use the routes.
+    """
+    config.add_route("home_view", "/")
+    config.add_route("top_thumbnail", "top_thumbnail/{serial}")
+
+def setup_testing_database():
+    """ Create an empty testing database.
+    """
+    from sqlalchemy import create_engine
+    engine = create_engine("sqlite://")
+    from pdfexploder.models import Base
+    DBSession.configure(bind=engine)
+    Base.metadata.create_all(engine)
+    #with transaction.manager:
+        #DBSession.add(create_placeholder_device())
+    return DBSession
 
 class TestMyViewSuccessCondition(unittest.TestCase):
     def setUp(self):
@@ -58,19 +80,19 @@ class TestThumbnailView(unittest.TestCase):
             result = shutil.rmtree(dir_out)
             self.assertIsNone(result)
 
-    def test_unexisting_top_page_thumbnail(self):
+    def test_unexisting_top_thumbnail(self):
         from pdfexploder.views import ThumbnailViews
         # Request the top of the pdf thumbnail, expect a placeholder png
         # if that device does not exist on disk
 
         # Get size of actual file on disk, compare
-        file_name = "database/imagery/top_page_placeholder.png"
+        file_name = "database/imagery/top_placeholder.png"
         actual_size = os.path.getsize(file_name)
 
         request = testing.DummyRequest()
         request.matchdict["serial"] = "BADDevice123"
         inst = ThumbnailViews(request)
-        view_back = inst.top_page_thumbnail()
+        view_back = inst.top_thumbnail()
 
         self.assertEqual(view_back.content_length, actual_size)
         self.assertEqual(view_back.content_type, "image/png")
@@ -81,17 +103,17 @@ class TestThumbnailView(unittest.TestCase):
         file_name = "database/imagery/../_empty_directory_required_"
         request.matchdict["serial"] = file_name 
         inst = ThumbnailViews(request)
-        view_back = inst.top_page_thumbnail()
+        view_back = inst.top_thumbnail()
         
         self.assertEqual(view_back.content_length, actual_size)
         self.assertEqual(view_back.content_type, "image/png")
 
-    def test_existing_top_page_thumbnail(self):
+    def test_existing_top_thumbnail(self):
         from pdfexploder.views import ThumbnailViews
         # Add a known file into the imagery folder
         serial = "test0123" # slug-friendly serial
         dir_name = "database/imagery/%s" % serial
-        dest_file = "%s/top_page_thumbnail.png" % dir_name
+        dest_file = "%s/top_thumbnail.png" % dir_name
         src_file = "database/imagery/known_top_image.png"
 
         result = os.makedirs(dir_name)
@@ -101,7 +123,7 @@ class TestThumbnailView(unittest.TestCase):
         request = testing.DummyRequest()
         request.matchdict["serial"] = serial
         inst = ThumbnailViews(request)
-        view_back = inst.top_page_thumbnail()
+        view_back = inst.top_thumbnail()
 
         actual_size = os.path.getsize(src_file)
         self.assertEqual(view_back.content_length, actual_size)
@@ -128,3 +150,23 @@ class TestMyViewFailureCondition(unittest.TestCase):
         request = testing.DummyRequest()
         info = my_view(request)
         self.assertEqual(info.status_int, 500)
+
+class FunctionalTests(unittest.TestCase):
+    def setUp(self):
+        from pdfexploder import main
+        settings = {"sqlalchemy.url": "sqlite://"}
+        app = main({}, **settings)
+        self.testapp = TestApp(app)
+        setup_testing_database()
+
+    def tearDown(self):
+        del self.testapp
+        from pdfexploder.models import DBSession
+        DBSession.remove()
+
+    def test_root(self):
+        res = self.testapp.get("/")
+        #log.info("Root res: %s", res)
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue("pdfexploder" in res.body)
+

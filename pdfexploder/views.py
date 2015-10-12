@@ -42,12 +42,12 @@ class ThumbnailViews:
         self.request.matchdict["serial"] = slugify(serial)
         #log.info("post-sanitize: %s", self.request.matchdict["serial"])
 
-    @view_config(route_name="top_page_thumbnail")
-    def top_page_thumbnail(self):
+    @view_config(route_name="top_thumbnail")
+    def top_thumbnail(self):
 
-        file_name = "database/imagery/%s/top_page_thumbnail.png" \
+        file_name = "database/imagery/%s/top_thumbnail.png" \
                     % self.request.matchdict["serial"]
-        location = "database/imagery/top_page_placeholder.png"
+        location = "database/imagery/top_placeholder.png"
 
         if os.path.exists(file_name):
             location = file_name
