@@ -2,11 +2,15 @@ import os
 
 from setuptools import setup, find_packages
 
-here = os.path.abspath(os.path.dirname(__file__))
-with open(os.path.join(here, "README.txt")) as f:
-    README = f.read()
-with open(os.path.join(here, "CHANGES.txt")) as f:
-    CHANGES = f.read()
+# These will break the travis build. 
+#here = os.path.abspath(os.path.dirname(__file__))
+#with open(os.path.join(here, "README.txt")) as f:
+#    README = f.read()
+#with open(os.path.join(here, "CHANGES.txt")) as f:
+#    CHANGES = f.read()
+
+README=""
+CHANGES=""
 
 requires = [
     "pyramid",
