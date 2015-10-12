@@ -9,7 +9,7 @@ from pyramid import testing
 
 from webtest import TestApp, Upload
 
-from .models import DBSession
+from pdfexploder.models import DBSession
 
 log = logging.getLogger()                                                             
 log.setLevel(logging.DEBUG)                                                           
@@ -26,6 +26,7 @@ def register_routes(config):
     """
     config.add_route("home_view", "/")
     config.add_route("top_thumbnail", "top_thumbnail/{serial}")
+    config.add_route("mosaic_thumbnail", "mosaic_thumbnail/{serial}")
 
 def setup_testing_database():
     """ Create an empty testing database.
@@ -43,7 +44,7 @@ class TestMyViewSuccessCondition(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
         from sqlalchemy import create_engine
-        engine = create_engine('sqlite://')
+        engine = create_engine("sqlite://")
         from .models import (
             Base,
             MyModel,
@@ -51,7 +52,7 @@ class TestMyViewSuccessCondition(unittest.TestCase):
         DBSession.configure(bind=engine)
         Base.metadata.create_all(engine)
         with transaction.manager:
-            model = MyModel(name='one', value=55)
+            model = MyModel(name="one", value=55)
             DBSession.add(model)
 
     def tearDown(self):
@@ -62,10 +63,10 @@ class TestMyViewSuccessCondition(unittest.TestCase):
         from .views import my_view
         request = testing.DummyRequest()
         info = my_view(request)
-        self.assertEqual(info['one'].name, 'one')
-        self.assertEqual(info['project'], 'pdfexploder')
+        self.assertEqual(info["one"].name, "one")
+        self.assertEqual(info["project"], "pdfexploder")
 
-class TestThumbnailView(unittest.TestCase):
+class TestThumbnailViews(unittest.TestCase):
     def setUp(self):
         # Clean any existing test files
         self.clean_test_files()
@@ -73,6 +74,7 @@ class TestThumbnailView(unittest.TestCase):
         register_routes(self.config)
 
     def tearDown(self):
+        # Comment out this line for easier post-test state inspections
         self.clean_test_files()
         testing.tearDown()
 
@@ -132,12 +134,61 @@ class TestThumbnailView(unittest.TestCase):
         self.assertEqual(view_back.content_length, actual_size)
         self.assertEqual(view_back.content_type, "image/png")
 
+    def test_unexisting_mosaic_thumbnail(self):
+        from pdfexploder.views import ThumbnailViews
+        # Request the mosaic thumbnail of the pdf, expect a placeholder
+        # png if that device does not exist on disk
+
+        # Get size of actual file on disk, compare
+        file_name = "database/imagery/mosaic_placeholder.png"
+        actual_size = os.path.getsize(file_name)
+
+        request = testing.DummyRequest()
+        request.matchdict["serial"] = "BADDevice111"
+        inst = ThumbnailViews(request)
+        view_back = inst.mosaic_thumbnail()
+
+        self.assertEqual(view_back.content_length, actual_size)
+        self.assertEqual(view_back.content_type, "image/png")
+
+        # Specify a known existing file with a relative pathname, verify
+        # it is unavailable by expecting the file size of the
+        # placeholder image
+        file_name = "database/imagery/../_empty_directory_required_"
+        request.matchdict["serial"] = file_name 
+        inst = ThumbnailViews(request)
+        view_back = inst.mosaic_thumbnail()
+        
+        self.assertEqual(view_back.content_length, actual_size)
+        self.assertEqual(view_back.content_type, "image/png")
+
+    def test_existing_mosaic_thumbnail(self):
+        from pdfexploder.views import ThumbnailViews
+        # Add a known file into the imagery folder
+        serial = "test0123" # slug-friendly serial
+        dir_name = "database/imagery/%s" % serial
+        dest_file = "%s/mosaic_thumbnail.png" % dir_name
+        src_file = "database/imagery/known_mosaic_image.png"
+
+        result = os.makedirs(dir_name)
+        result = shutil.copy(src_file, dest_file) 
+
+        # Verify that it can be viewed
+        request = testing.DummyRequest()
+        request.matchdict["serial"] = serial
+        inst = ThumbnailViews(request)
+        view_back = inst.mosaic_thumbnail()
+
+        actual_size = os.path.getsize(src_file)
+        self.assertEqual(view_back.content_length, actual_size)
+        self.assertEqual(view_back.content_type, "image/png")
+
 
 class TestMyViewFailureCondition(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
         from sqlalchemy import create_engine
-        engine = create_engine('sqlite://')
+        engine = create_engine("sqlite://")
         from .models import (
             Base,
             MyModel,
@@ -174,8 +225,14 @@ class FunctionalTests(unittest.TestCase):
         self.assertTrue("pdfexploder" in res.body)
 
     def test_top_level_image(self):
-        # Get placeholder on no serial specified
-        
 
-        # Get the placeholder on bad serial specified
-        pass
+        url = "/top_thumbnail"
+
+        # known unknown serial is placeholder
+        serial = "knowitsbad"
+        res = self.testapp.get("%s/%s" % (url, serial))
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.content_type, "image/png")
+        # Why are you doing this in the unit and in the functional test?
+        self.assertEqual(res.content_length, 36090)
+

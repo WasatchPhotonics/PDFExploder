@@ -17,6 +17,7 @@ def main(global_config, **settings):
     config.include("pyramid_chameleon")
     config.add_static_view("static", "static", cache_max_age=3600)
     config.add_route("home", "/")
-    config.add_route("top_thumbnail", "top_thumbnail/{serial}")
+    config.add_route("top_thumbnail", "/top_thumbnail/{serial}")
+    config.add_route("mosaic_thumbnail", "/mosaic_thumbnail/{serial}")
     config.scan()
     return config.make_wsgi_app()
