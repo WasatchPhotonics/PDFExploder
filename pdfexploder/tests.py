@@ -32,6 +32,25 @@ class TestMyViewSuccessCondition(unittest.TestCase):
         self.assertEqual(info['one'].name, 'one')
         self.assertEqual(info['project'], 'pdfexploder')
 
+class TestThumbnailView(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        pass
+
+    def test_unexisting_top_page_thumbnail(self):
+        # Request the top of the pdf thumbnail, expect a placeholder png
+        # if that device does not exist on disk
+        from pdfexploder.views import ThumbnailViews
+
+        request = testing.DummyRequest()
+        request.matchdict["serial"] = "BADDevice123"
+        inst = ThumbnailViews(request)
+        view_back = inst.top_page_thumbnail()
+
+        self.assertEqual(len(view_back.body), 1234)
+        
 
 class TestMyViewFailureCondition(unittest.TestCase):
     def setUp(self):

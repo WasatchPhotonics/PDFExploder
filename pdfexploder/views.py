@@ -17,6 +17,24 @@ def my_view(request):
         return Response(conn_err_msg, content_type='text/plain', status_int=500)
     return {'one': one, 'project': 'pdfexploder'}
 
+class ThumbnailViews:
+    """ Return png objects from disk where the serial number is found,
+    otherwise return placeholder imagery.
+    """
+    def __init__(self, request):
+        self.request = request
+        self.sanitize_parameters()
+
+    def sanitize_parameters(self):
+        """ slugify the parameters to prevent relative path names in the
+        system.
+        """
+        return
+
+    @view_config(route_name="top_page_thumbnail")
+    def top_page_thumbnail(request):
+
+        return 
 
 conn_err_msg = """\
 Pyramid is having a problem using your SQL database.  The problem
