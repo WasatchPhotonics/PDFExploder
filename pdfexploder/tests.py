@@ -1,4 +1,6 @@
 import os
+import sys
+import logging
 import unittest
 import transaction
 
@@ -6,6 +8,13 @@ from pyramid import testing
 
 from .models import DBSession
 
+log = logging.getLogger()                                                             
+log.setLevel(logging.DEBUG)                                                           
+                                                                                      
+strm = logging.StreamHandler(sys.stderr)                                              
+frmt = logging.Formatter("%(name)s - %(levelname)s %(message)s")                      
+strm.setFormatter(frmt)                                                               
+log.addHandler(strm)    
 
 class TestMyViewSuccessCondition(unittest.TestCase):
     def setUp(self):

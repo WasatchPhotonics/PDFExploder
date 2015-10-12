@@ -13,7 +13,7 @@ from .models import (
     MyModel,
     )
 
-log = logging.getLogger()
+log = logging.getLogger(__name__)
 
 
 @view_config(route_name='home', renderer='templates/mytemplate.pt')
@@ -36,12 +36,12 @@ class ThumbnailViews:
         """ slugify the parameters to prevent relative path names in the
         system.
         """
-        log.info("Pre-sanitize: ", self.request.matchdict["serial"])
+        log.info("Pre-sanitize: %s", self.request.matchdict["serial"])
 
         serial = self.request.matchdict["serial"]
         self.request.matchdict["serial"] = slugify(serial)
 
-        log.info("post-sanitize: ", self.request.matchdict["serial"])
+        log.info("post-sanitize: %s", self.request.matchdict["serial"])
 
     @view_config(route_name="top_page_thumbnail")
     def top_page_thumbnail(request):
