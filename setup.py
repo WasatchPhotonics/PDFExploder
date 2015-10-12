@@ -23,6 +23,7 @@ requires = [
     "waitress",
     "WebTest",
     "requests",
+    "slugify",
     ]
 
 setup(name="pdfexploder",
