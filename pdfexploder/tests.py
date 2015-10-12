@@ -54,16 +54,29 @@ class TestThumbnailView(unittest.TestCase):
         # if that device does not exist on disk
         from pdfexploder.views import ThumbnailViews
 
+        # Get size of actual file on disk, compare
+        file_name = "database/imagery/top_page_placeholder.png"
+        actual_size = os.path.getsize(file_name)
+
         request = testing.DummyRequest()
         request.matchdict["serial"] = "BADDevice123"
         inst = ThumbnailViews(request)
         view_back = inst.top_page_thumbnail()
 
-        # Get size of actual file on disk, compare
-        file_name = "database/imagery/top_page_placeholder.png"
-        actual_size = os.path.getsize(file_name)
-        self.assertEqual(len(view_back.body), actual_size)
+        self.assertEqual(view_back.content_length, actual_size)
+        self.assertEqual(view_back.content_type, "image/png")
         
+    
+        # Specify a known existing file with a relative pathname, verify
+        # it is unavailable by expecting the file size of the
+        # placeholder image
+        file_name = "database/imagery/../_empty_directory_required_"
+        request.matchdict["serial"] = file_name 
+        inst = ThumbnailViews(request)
+        view_back = inst.top_page_thumbnail()
+        
+        self.assertEqual(view_back.content_length, actual_size)
+        self.assertEqual(view_back.content_type, "image/png")
 
 class TestMyViewFailureCondition(unittest.TestCase):
     def setUp(self):
