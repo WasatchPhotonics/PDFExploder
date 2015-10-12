@@ -1,7 +1,8 @@
+import os
+import logging
+
 from pyramid.response import Response, FileResponse
 from pyramid.view import view_config
-
-import logging
 
 from slugify import slugify
 
@@ -36,17 +37,21 @@ class ThumbnailViews:
         """ slugify the parameters to prevent relative path names in the
         system.
         """
-        log.info("Pre-sanitize: %s", self.request.matchdict["serial"])
-
+        #log.info("Pre-sanitize: %s", self.request.matchdict["serial"])
         serial = self.request.matchdict["serial"]
         self.request.matchdict["serial"] = slugify(serial)
-
-        log.info("post-sanitize: %s", self.request.matchdict["serial"])
+        #log.info("post-sanitize: %s", self.request.matchdict["serial"])
 
     @view_config(route_name="top_page_thumbnail")
-    def top_page_thumbnail(request):
+    def top_page_thumbnail(self):
 
+        file_name = "database/imagery/%s/top_page_thumbnail.png" \
+                    % self.request.matchdict["serial"]
         location = "database/imagery/top_page_placeholder.png"
+
+        if os.path.exists(file_name):
+            location = file_name
+
         return FileResponse(location)
 
 conn_err_msg = """\
