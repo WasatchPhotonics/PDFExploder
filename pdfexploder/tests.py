@@ -84,7 +84,20 @@ class TestThumbnailViews(unittest.TestCase):
         if os.path.exists(dir_out):
             result = shutil.rmtree(dir_out)
             self.assertIsNone(result)
-    
+   
+    def test_colander_pdf_thumbnail(self):
+        """ Save as add top thumbnail below, but use colander and
+        deform for the back end validation.
+        """
+        from pdfexploder.views import ThumbnailViews
+
+        # Get the empty form
+        request = testing.DummyRequest()
+        #inst = ThumbnailViews(request)
+        #view_back = inst.colnd_add_pdf()
+
+        #self.assertEqual(view_back["form"].serial, "")
+ 
     def test_add_top_thumbnail_from_pdf(self):
         # upload a pdf, verify top image is extracted and stored on the
         # system to be displayed
