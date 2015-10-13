@@ -154,6 +154,7 @@ class TestThumbnailViews(unittest.TestCase):
         # Now verify the mosaic thumbnail has been generated
 
         dest_file_name = "database/imagery/test0123/mosaic_thumbnail.png"
+        view_back = inst.mosaic_thumbnail()
         actual_size = os.path.getsize(dest_file_name)
         self.assertEqual(view_back.content_length, actual_size)
         self.assertEqual(view_back.content_type, "image/png")

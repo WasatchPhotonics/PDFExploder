@@ -3,7 +3,7 @@ import sys
 import shutil
 import logging
 
-from subprocess import Popen, PIPE
+from subprocess import Popen
 
 from pyramid.response import Response, FileResponse
 from pyramid.httpexceptions import HTTPNotFound
@@ -108,9 +108,7 @@ class ThumbnailViews:
 
         log.info("Resize pdf pages")
         wtpage_file = "%s/wt_page.png" % tile_dir
-        cmd_options = ["convert", pdf_filename, 
-                       wtpage_file]
-
+        cmd_options = ["convert", pdf_filename, wtpage_file]
        
         try:
             self.pipe = Popen(cmd_options)
@@ -134,7 +132,6 @@ class ThumbnailViews:
                        "-geometry", "-10+2", 
                        "-resize", "10%", out_file]
 
-       
         try:
             self.pipe = Popen(cmd_options)
             self.pipe.communicate()
