@@ -17,9 +17,6 @@ requires = [
     "pyramid_chameleon",
     "pyramid_debugtoolbar",
     "pyramid_tm",
-    "SQLAlchemy",
-    "transaction",
-    "zope.sqlalchemy",
     "waitress",
     "WebTest",
     "requests",
@@ -49,7 +46,5 @@ setup(name="pdfexploder",
       entry_points="""\
       [paste.app_factory]
       main = pdfexploder:main
-      [console_scripts]
-      initialize_pdfexploder_db = scripts.initializedb:main
       """,
       )

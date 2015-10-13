@@ -9,7 +9,6 @@ from pyramid import testing
 
 from webtest import TestApp, Upload
 
-from pdfexploder.models import DBSession
 
 log = logging.getLogger()                                                             
 log.setLevel(logging.DEBUG)                                                           
@@ -28,43 +27,6 @@ def register_routes(config):
     config.add_route("top_thumbnail", "top_thumbnail/{serial}")
     config.add_route("mosaic_thumbnail", "mosaic_thumbnail/{serial}")
 
-def setup_testing_database():
-    """ Create an empty testing database.
-    """
-    from sqlalchemy import create_engine
-    engine = create_engine("sqlite://")
-    from pdfexploder.models import Base
-    DBSession.configure(bind=engine)
-    Base.metadata.create_all(engine)
-    #with transaction.manager:
-        #DBSession.add(create_placeholder_device())
-    return DBSession
-
-class TestMyViewSuccessCondition(unittest.TestCase):
-    def setUp(self):
-        self.config = testing.setUp()
-        from sqlalchemy import create_engine
-        engine = create_engine("sqlite://")
-        from .models import (
-            Base,
-            MyModel,
-            )
-        DBSession.configure(bind=engine)
-        Base.metadata.create_all(engine)
-        with transaction.manager:
-            model = MyModel(name="one", value=55)
-            DBSession.add(model)
-
-    def tearDown(self):
-        DBSession.remove()
-        testing.tearDown()
-
-    def test_passing_view(self):
-        from .views import my_view
-        request = testing.DummyRequest()
-        info = my_view(request)
-        self.assertEqual(info["one"].name, "one")
-        self.assertEqual(info["project"], "pdfexploder")
 
 class TestThumbnailViews(unittest.TestCase):
     def setUp(self):
@@ -267,39 +229,15 @@ class TestThumbnailViews(unittest.TestCase):
         self.assertEqual(view_back.content_type, "image/png")
 
 
-class TestMyViewFailureCondition(unittest.TestCase):
-    def setUp(self):
-        self.config = testing.setUp()
-        from sqlalchemy import create_engine
-        engine = create_engine("sqlite://")
-        from .models import (
-            Base,
-            MyModel,
-            )
-        DBSession.configure(bind=engine)
-
-    def tearDown(self):
-        DBSession.remove()
-        testing.tearDown()
-
-    def test_failing_view(self):
-        from .views import my_view
-        request = testing.DummyRequest()
-        info = my_view(request)
-        self.assertEqual(info.status_int, 500)
-
 class FunctionalTests(unittest.TestCase):
     def setUp(self):
         from pdfexploder import main
-        settings = {"sqlalchemy.url": "sqlite://"}
+        settings = {}
         app = main({}, **settings)
         self.testapp = TestApp(app)
-        setup_testing_database()
 
     def tearDown(self):
         del self.testapp
-        from pdfexploder.models import DBSession
-        DBSession.remove()
 
     def test_root(self):
         res = self.testapp.get("/")
