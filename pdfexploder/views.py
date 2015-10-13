@@ -62,10 +62,12 @@ class ThumbnailViews:
                 log.critical("Must populate serial")
                 return HTTPNotFound()
 
+            serial = slugify(serial)
             file_content = self.request.POST["file_content"]
             filename = file_content.filename
             self.write_file(serial, "original.pdf", file_content.file)
             self.generate_pdf_thumbnail(serial)
+            log.info("Callg enerate mosaic")
             self.generate_mosaic_thumbnail(serial)
         
             return dict(serial=serial, filename=filename)
@@ -81,13 +83,14 @@ class ThumbnailViews:
         tile_dir = "%s/%s/tiles/" % (self.prefix, serial)
 
         # delete any previously generated tiles
-        if os.path.exists(tile_dir):
-            log.info("Deleting previous tile dir")
+        try:
+            log.info("Delete old %s", tile_dir)
             shutil.rmtree(tile_dir)
+        except OSError, e:
+            log.exception(e)
 
-        else:
-            log.info("Make tile directory: %s", tile_dir)
-            os.makedirs(tile_dir)
+        log.info("Make tile directory: %s", tile_dir)
+        os.makedirs(tile_dir)
       
         # The with Image concept with wand api and multi page documents
         # does not seem to handle resizing correctly. Only the last file

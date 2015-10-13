@@ -37,12 +37,17 @@ class TestThumbnailViews(unittest.TestCase):
 
     def tearDown(self):
         # Comment out this line for easier post-test state inspections
-        #self.clean_test_files()
+        self.clean_test_files()
         testing.tearDown()
 
     def clean_test_files(self):
         # Remove the directory if it exists
         dir_out = "database/imagery/test0123"
+        if os.path.exists(dir_out):
+            result = shutil.rmtree(dir_out)
+            self.assertIsNone(result)
+
+        dir_out = "database/imagery/functest1234"
         if os.path.exists(dir_out):
             result = shutil.rmtree(dir_out)
             self.assertIsNone(result)
@@ -119,10 +124,10 @@ class TestThumbnailViews(unittest.TestCase):
         self.assertEqual(view_back.content_type, "image/png")
 
         # Run it again to ensure that the mosaic tiles are deleted
+        log.info("About to call again")
         request = testing.DummyRequest()
         request.matchdict["serial"] = serial
         inst = ThumbnailViews(request)
-        view_back = inst.top_thumbnail()
 
         dest_file_name = "database/imagery/test0123/mosaic_thumbnail.png"
         view_back = inst.mosaic_thumbnail()
