@@ -120,7 +120,7 @@ class TestThumbnailViews(unittest.TestCase):
         from pdfexploder.views import ThumbnailViews
         # Specify a file object, submit it to the view
         serial = "test0123" # slug-friendly serial
-        source_file_name = "database/imagery/known_unittest.pdf"
+        source_file_name = "database/imagery/work_ticket_test.pdf"
 
         # From:  http://stackoverflow.com/questions/11102432/\
         # pyramid-writing-unittest-for-file-upload-for

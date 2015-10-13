@@ -1,6 +1,9 @@
 import os
+import sys
 import shutil
 import logging
+
+from subprocess import Popen, PIPE
 
 from pyramid.response import Response, FileResponse
 from pyramid.httpexceptions import HTTPNotFound
@@ -88,7 +91,6 @@ class ThumbnailViews:
         """
         pdf_filename = "%s/%s/original.pdf" % (self.prefix, serial)
         tile_dir = "%s/%s/tiles/" % (self.prefix, serial)
-        temp_file = "%s/%s/top_thumbnail.png" % (self.prefix, serial)
 
         # delete any previously generated tiles
         if os.path.exists(tile_dir):
@@ -98,21 +100,49 @@ class ThumbnailViews:
         else:
             log.info("Make tile directory: %s", tile_dir)
             os.makedirs(tile_dir)
-        
+      
+        # The with Image concept with wand api and multi page documents
+        # does not seem to handle resizing correctly. Only the last file
+        # is saved with the new filesize. Use command line version
+        # instead
 
-        # Convert pdf to pngs
-        pagecount = 0
-        with Image(filename=pdf_filename) as img:
-            img.resize(306, 396)
-            save_filename = "%s/wt_%s.png" % (tile_dir, pagecount)
-            pagecount += 1
+        log.info("Resize pdf pages")
+        wtpage_file = "%s/wt_page.png" % tile_dir
+        cmd_options = ["convert", pdf_filename, 
+                       wtpage_file]
 
-        
-        #log.info("Combine into polaroid row")
-        #cmd_options = ['montage', 'null:', 'wt_*.png', 'null:', '+polaroid',
-        #              '-gravity', 'center', '-tile', '9x1',  '-geometry',
-        #              '-50+2', '-resize', '30%', 'polaroid_overlap.jpg']
-        
+       
+        try:
+            self.pipe = Popen(cmd_options)
+            self.pipe.communicate()
+                               
+        except Exception, e:
+            log.exception(e)
+            return False
+
+       
+        # Is there a python api that supports montage from imagemagick?
+        # As of 2015-10-13 14:29 the only way appears to be calling the
+        # command line version, fortunately installed by default on all
+        # travis system images. 
+        log.info("Combine into polaroid row")
+        wt_files = "%s/wt_*.png" % tile_dir
+        out_file = "%s/%s/mosaic_thumbnail.png" % (self.prefix, serial)
+        cmd_options = ["montage",  wt_files,  
+                       "+polaroid",
+                       "-tile", "9x1",  
+                       "-geometry", "-10+2", 
+                       "-resize", "10%", out_file]
+
+       
+        try:
+            self.pipe = Popen(cmd_options)
+            self.pipe.communicate()
+                               
+        except Exception, e:
+            log.exception(e)
+            return False
+
         
 
     def generate_pdf_thumbnail(self, serial):
@@ -123,7 +153,7 @@ class ThumbnailViews:
         temp_file = "%s/%s/top_thumbnail.png" % (self.prefix, serial)
 
         with Image(filename=pdf_filename) as img:
-            img.resize(306, 396)
+            #img.resize(306, 396)
             img.save(filename=temp_file)
 
         log.info("Saved top thumbnail")
