@@ -30,7 +30,6 @@ class ThumbnailViews:
     otherwise return placeholder imagery.
     """
     def __init__(self, request):
-        print "init request: %r" % request
         self.request = request
 
         self.sanitize_parameters()

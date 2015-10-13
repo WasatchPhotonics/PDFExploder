@@ -236,3 +236,9 @@ class FunctionalTests(unittest.TestCase):
         # Why are you doing this in the unit and in the functional test?
         self.assertEqual(res.content_length, 36090)
 
+   
+        # non-existent serial - why does this return an exception
+        # instead of an actual 404? Because you need expect_errors:
+        # https://github.com/django-webtest/django-webtest/issues/30
+        res = self.testapp.get("%s" % url, expect_errors=True)
+        self.assertEqual(res.status_code, 404)
