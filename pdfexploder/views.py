@@ -9,8 +9,6 @@ from slugify import slugify
 
 from wand.image import Image
 
-import deform.widget
-
 from sqlalchemy.exc import DBAPIError
 
 from .models import (
