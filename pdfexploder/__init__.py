@@ -20,7 +20,5 @@ def main(global_config, **settings):
     config.add_route("top_thumbnail", "/top_thumbnail/{serial}")
     config.add_route("mosaic_thumbnail", "/mosaic_thumbnail/{serial}")
     config.add_route("add_pdf", "/add_pdf")
-    config.add_route("colndr_add_pdf", "/colndr_add_pdf")
-    config.add_static_view("deform_static", "deform:static/")
     config.scan()
     return config.make_wsgi_app()

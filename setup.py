@@ -25,7 +25,6 @@ requires = [
     "requests",
     "python-slugify",
     "wand",
-    "deform",
     ]
 
 setup(name="pdfexploder",

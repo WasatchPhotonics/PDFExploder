@@ -85,21 +85,6 @@ class TestThumbnailViews(unittest.TestCase):
             result = shutil.rmtree(dir_out)
             self.assertIsNone(result)
    
-    def test_colander_pdf_thumbnail(self):
-        """ Save as add top thumbnail below, but use colander and
-        deform for the back end validation.
-        """
-        from pdfexploder.views import ThumbnailViews
-
-        # Get the empty form
-        request = testing.DummyRequest()
-        inst = ThumbnailViews(request)
-        view_back = inst.colndr_add_pdf()
-
-        # Check that a form is returned here. Check that the form fields
-        # are populated in the functional tests
-        self.assertTrue("form" in view_back.keys())
-
  
     def test_add_top_thumbnail_from_pdf(self):
         # upload a pdf, verify top image is extracted and stored on the
@@ -321,11 +306,3 @@ class FunctionalTests(unittest.TestCase):
         res = self.testapp.get(url, expect_errors=True)
         self.assertEqual(res.status_code, 404)
     
-    def test_form_population_colander(self):
-        url = "/colndr_add_pdf"
-   
-        # Verify that the fields are available in the form 
-        res = self.testapp.get(url)
-        #log.info("full page: %s", res)
-        form = res.forms["deform"]
-        self.assertEqual(form["serial"].value, "") 
