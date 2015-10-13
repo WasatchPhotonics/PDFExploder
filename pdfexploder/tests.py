@@ -84,6 +84,20 @@ class TestThumbnailViews(unittest.TestCase):
         if os.path.exists(dir_out):
             result = shutil.rmtree(dir_out)
             self.assertIsNone(result)
+    
+    def test_add_top_thumbnail_from_pdf(self):
+        # upload a pdf, verify top image is extracted and stored on the
+        # system to be displayed
+        from pdfexploder.views import ThumbnailViews
+
+        # Get the add pdf view, verify that the form fields are
+        # available
+        request = testing.DummyRequest()
+        inst = ThumbnailViews(request)
+        view_back = inst.add_pdf()
+
+        # Verify that the form fields are available
+        self.assertEqual(view_back["serial"], "") 
 
     def test_unexisting_top_thumbnail(self):
         from pdfexploder.views import ThumbnailViews
@@ -242,3 +256,18 @@ class FunctionalTests(unittest.TestCase):
         # https://github.com/django-webtest/django-webtest/issues/30
         res = self.testapp.get("%s" % url, expect_errors=True)
         self.assertEqual(res.status_code, 404)
+
+    def test_mosaic_image(self):
+        url = "/mosaic_thumbnail"
+
+        # known unkonwn serial is a placeholder
+        serial = "badmosaic"
+        res = self.testapp.get("%s/%s" % (url, serial))
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.content_type, "image/png")
+        self.assertEqual(res.content_length, 57037)
+        
+        # Expect an error on non-existent serial
+        res = self.testapp.get(url, expect_errors=True)
+        self.assertEqual(res.status_code, 404)
+    

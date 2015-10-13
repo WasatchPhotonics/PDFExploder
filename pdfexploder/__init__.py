@@ -19,5 +19,6 @@ def main(global_config, **settings):
     config.add_route("home", "/")
     config.add_route("top_thumbnail", "/top_thumbnail/{serial}")
     config.add_route("mosaic_thumbnail", "/mosaic_thumbnail/{serial}")
+    config.add_route("add_pdf", "/add_pdf")
     config.scan()
     return config.make_wsgi_app()

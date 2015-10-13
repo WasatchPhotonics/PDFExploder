@@ -43,11 +43,26 @@ class ThumbnailViews:
         system.
         """
         #log.info("Sanitize parameters")
-        serial = self.request.matchdict["serial"]
+        serial = "unspecified"
+        try:
+            serial = self.request.matchdict["serial"]
+        except KeyError:
+            log.warn("No serial key specified")
+
         self.request.matchdict["serial"] = slugify(serial)
+
+    @view_config(route_name="add_pdf")
+    def add_pdf(self):
+        """ Display the pdf addition form, accept an uploaded file and
+        generation thumbnail representations.
+        """
+        return dict(serial="")
 
     @view_config(route_name="top_thumbnail")
     def top_thumbnail(self):
+        """ Display the top page thumbnail of the specified pdf if it
+        exists.
+        """
         file_name = "%s/%s/top_thumbnail.png" \
                     % (self.prefix, self.serial)
         location = "%s/top_placeholder.png" % self.prefix
@@ -59,7 +74,9 @@ class ThumbnailViews:
 
     @view_config(route_name="mosaic_thumbnail")
     def mosaic_thumbnail(self):
-
+        """ Display the mosaic multi page thumbnail of the pdf if it
+        exists.
+        """
         file_name = "%s/%s/mosaic_thumbnail.png" \
                     % (self.prefix, self.serial)
         location = "%s/mosaic_placeholder.png" % self.prefix
