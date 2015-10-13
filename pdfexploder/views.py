@@ -86,13 +86,32 @@ class ThumbnailViews:
         """ Convert the uploaded pdf to a wide image of overlaid, titled
         pages for display as a sort of line of polaroids.
         """
-        pdf_filename = "%s/%s/original.pdf[0]" % (self.prefix, serial)
+        pdf_filename = "%s/%s/original.pdf" % (self.prefix, serial)
+        tile_dir = "%s/%s/tiles/" % (self.prefix, serial)
         temp_file = "%s/%s/top_thumbnail.png" % (self.prefix, serial)
 
-        # Create the tile directory if it does not exist
-
         # delete any previously generated tiles
+        if os.path.exists(tile_dir):
+            log.info("Deleting previous tile dir")
+            shutil.rmtree(tile_dir)
 
+        else:
+            log.info("Make tile directory: %s", tile_dir)
+            os.makedirs(tile_dir)
+        
+
+        # Convert pdf to pngs
+        pagecount = 0
+        with Image(filename=pdf_filename) as img:
+            img.resize(306, 396)
+            save_filename = "%s/wt_%s.png" % (tile_dir, pagecount)
+            pagecount += 1
+
+        
+        #log.info("Combine into polaroid row")
+        #cmd_options = ['montage', 'null:', 'wt_*.png', 'null:', '+polaroid',
+        #              '-gravity', 'center', '-tile', '9x1',  '-geometry',
+        #              '-50+2', '-resize', '30%', 'polaroid_overlap.jpg']
         
         
 

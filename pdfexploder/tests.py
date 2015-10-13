@@ -75,7 +75,7 @@ class TestThumbnailViews(unittest.TestCase):
 
     def tearDown(self):
         # Comment out this line for easier post-test state inspections
-        self.clean_test_files()
+        #self.clean_test_files()
         testing.tearDown()
 
     def clean_test_files(self):
