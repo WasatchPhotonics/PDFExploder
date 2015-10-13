@@ -3,6 +3,7 @@ import shutil
 import logging
 
 from pyramid.response import Response, FileResponse
+from pyramid.httpexceptions import HTTPNotFound
 from pyramid.view import view_config
 
 from slugify import slugify
@@ -61,13 +62,20 @@ class ThumbnailViews:
         generation thumbnail representations.
         """
         if "form.submitted" in self.request.params:
+            if "serial" not in self.request.params:
+                log.critical("Must submit a serial")
+                return HTTPNotFound()
+
             serial = self.request.POST["serial"] 
+            if serial == "":
+                log.critical("Must populate serial")
+                return HTTPNotFound()
 
             file_content = self.request.POST["file_content"]
             filename = file_content.filename
             self.write_file(serial, "original.pdf", file_content.file)
             self.pdf_thumbnail(serial)
-            
+        
             return dict(serial=serial, filename=filename)
              
             

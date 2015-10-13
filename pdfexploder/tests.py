@@ -101,6 +101,22 @@ class TestThumbnailViews(unittest.TestCase):
         self.assertEqual(view_back["serial"], "") 
         self.assertEqual(view_back["filename"], "")
 
+        # Attempt to submit without specifying a serial number field,
+        # expect a failure
+        new_dict = {"form.submitted":"True"}
+        request = testing.DummyRequest(new_dict)
+        inst = ThumbnailViews(request)
+        view_back = inst.add_pdf()
+        self.assertEqual(view_back.status_code, 404)
+       
+        # Attempt submit specifying blank serial 
+        new_dict = {"form.submitted":"True", "serial":""}
+        request = testing.DummyRequest(new_dict)
+        inst = ThumbnailViews(request)
+        view_back = inst.add_pdf()
+        self.assertEqual(view_back.status_code, 404)
+
+
         # Specify a file object, submit it to the view
         serial = "test0123" # slug-friendly serial
         source_file_name = "database/imagery/known_unittest.pdf"
@@ -312,16 +328,27 @@ class FunctionalTests(unittest.TestCase):
         # template shows no image specified text based on serial number
         res = self.testapp.get(url)
 
+        # Form is not populated
         form = res.forms["pdf_form"]
-        #log.info("Ttoal: %s", res)
         self.assertEqual(form["serial"].value, "")
         self.assertEqual(form["file_content"].value, "")
+
+        # Image links do not exist
+        self.assertTrue("top_thumbnail.png" not in res)
+        self.assertTrue("mosaic_thumbnail.png" not in res)
 
         # After succesful upload, template shows form with fields
         # pre-populated and thumbnail images
         source_file = "database/imagery/known_unittest.pdf"
+        test_serial = "functest1234"
+        form["serial"] = test_serial
         form["file_content"] = Upload(source_file) 
 
         submit_res = form.submit("form.submitted")
         self.assertEquals(submit_res.status_code, 200)
- 
+
+        top_link = "top_thumbnail/%s" % test_serial
+        self.assertTrue(top_link in submit_res)
+
+        mos_link = "mosaic_thumbnail/%s" % test_serial
+        self.assertTrue(mos_link in submit_res)
