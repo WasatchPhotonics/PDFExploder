@@ -13,5 +13,5 @@ install:
 # folder
 # Looks like you need to move everything you don't want tested outside
 # the cookbook folder
-script: nosetests --cover-erase --with-coverage --cover-package=pdfexploder --exclude=scripts/
+script: nosetests --cover-erase --with-coverage --cover-package=pdfexploder 
 after_success: coveralls

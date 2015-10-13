@@ -110,13 +110,9 @@ class ThumbnailViews:
         wtpage_file = "%s/wt_page.png" % tile_dir
         cmd_options = ["convert", pdf_filename, wtpage_file]
        
-        try:
-            self.pipe = Popen(cmd_options)
-            self.pipe.communicate()
-                               
-        except Exception, e:
-            log.exception(e)
-            return False
+            
+        self.pipe = Popen(cmd_options)
+        self.pipe.communicate()
 
        
         # Is there a python api that supports montage from imagemagick?
@@ -132,14 +128,8 @@ class ThumbnailViews:
                        "-geometry", "-10+2", 
                        "-resize", "10%", out_file]
 
-        try:
-            self.pipe = Popen(cmd_options)
-            self.pipe.communicate()
-                               
-        except Exception, e:
-            log.exception(e)
-            return False
-
+        self.pipe = Popen(cmd_options)
+        self.pipe.communicate()
         
 
     def generate_pdf_thumbnail(self, serial):
@@ -150,7 +140,7 @@ class ThumbnailViews:
         temp_file = "%s/%s/top_thumbnail.png" % (self.prefix, serial)
 
         with Image(filename=pdf_filename) as img:
-            #img.resize(306, 396)
+            img.resize(306, 396)
             img.save(filename=temp_file)
 
         log.info("Saved top thumbnail")

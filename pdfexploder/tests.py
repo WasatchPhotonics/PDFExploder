@@ -115,7 +115,6 @@ class TestThumbnailViews(unittest.TestCase):
         view_back = inst.add_pdf()
         self.assertEqual(view_back.status_code, 404)
 
- 
     def test_add_thumbnails_from_pdf(self):
         from pdfexploder.views import ThumbnailViews
         # Specify a file object, submit it to the view
@@ -140,7 +139,6 @@ class TestThumbnailViews(unittest.TestCase):
 
         # Call the display view and verify the top page thumbnail has
         # been generated
-
         request = testing.DummyRequest()
         request.matchdict["serial"] = serial
         inst = ThumbnailViews(request)
@@ -152,6 +150,17 @@ class TestThumbnailViews(unittest.TestCase):
         self.assertEqual(view_back.content_type, "image/png")
 
         # Now verify the mosaic thumbnail has been generated
+        dest_file_name = "database/imagery/test0123/mosaic_thumbnail.png"
+        view_back = inst.mosaic_thumbnail()
+        actual_size = os.path.getsize(dest_file_name)
+        self.assertEqual(view_back.content_length, actual_size)
+        self.assertEqual(view_back.content_type, "image/png")
+
+        # Run it again to ensure that the mosaic tiles are deleted
+        request = testing.DummyRequest()
+        request.matchdict["serial"] = serial
+        inst = ThumbnailViews(request)
+        view_back = inst.top_thumbnail()
 
         dest_file_name = "database/imagery/test0123/mosaic_thumbnail.png"
         view_back = inst.mosaic_thumbnail()
