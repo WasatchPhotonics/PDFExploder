@@ -1,6 +1,8 @@
 import os
 import shutil
 import logging
+import colander
+
 
 from pyramid.response import Response, FileResponse
 from pyramid.view import view_config
@@ -8,6 +10,8 @@ from pyramid.view import view_config
 from slugify import slugify
 
 from wand.image import Image
+
+import deform.widget
 
 from sqlalchemy.exc import DBAPIError
 
@@ -26,6 +30,18 @@ def my_view(request):
     except DBAPIError:
         return Response(conn_err_msg, content_type="text/plain", status_int=500)
     return {"one": one, "project": "pdfexploder"}
+
+
+class WikiPage(colander.MappingSchema):
+    """ defines data model and form configuration using colander.
+    """
+    title = colander.SchemaNode(colander.String())
+    body = colander.SchemaNode(
+        colander.String(),
+        widget=deform.widget.RichTextWidget()
+    )
+    serial = colander.SchemaNode(colander.String())
+    filename = colander.SchemaNode(colander.String())
 
 class ThumbnailViews:
     """ Return png objects from disk where the serial number is found,
@@ -52,6 +68,30 @@ class ThumbnailViews:
             log.warn("No serial key specified")
 
         self.request.matchdict["serial"] = slugify(serial)
+
+    @property 
+    def wiki_form(self):
+        schema = WikiPage()
+        formed = deform.Form(schema, buttons=("submit",))
+        log.info("Formed: %s", formed)
+        return formed
+        
+    @property
+    def reqts(self):
+        return self.wiki_form.get_widget_resources()
+
+    @view_config(route_name="colndr_add_pdf",
+                 renderer="templates/wikipage_addedit.pt")
+    def colndr_add_pdf(self):
+        """ Use colander for data object validation.
+        """
+        form = self.wiki_form.render()
+        return dict(form=form) 
+        # The idea here is to return a form object so the unittest
+        # approach with non-deform based datamodels can be kept. If you
+        # can't render in the template using structure form.render()
+        # then this may not work.
+        #return dict(non_rendered_form=self.wiki_form)
 
     @view_config(route_name="add_pdf")
     def add_pdf(self):

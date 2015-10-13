@@ -93,10 +93,13 @@ class TestThumbnailViews(unittest.TestCase):
 
         # Get the empty form
         request = testing.DummyRequest()
-        #inst = ThumbnailViews(request)
-        #view_back = inst.colnd_add_pdf()
+        inst = ThumbnailViews(request)
+        view_back = inst.colndr_add_pdf()
 
-        #self.assertEqual(view_back["form"].serial, "")
+        # Check that a form is returned here. Check that the form fields
+        # are populated in the functional tests
+        self.assertTrue("form" in view_back.keys())
+
  
     def test_add_top_thumbnail_from_pdf(self):
         # upload a pdf, verify top image is extracted and stored on the
@@ -318,3 +321,11 @@ class FunctionalTests(unittest.TestCase):
         res = self.testapp.get(url, expect_errors=True)
         self.assertEqual(res.status_code, 404)
     
+    def test_form_population_colander(self):
+        url = "/colndr_add_pdf"
+   
+        # Verify that the fields are available in the form 
+        res = self.testapp.get(url)
+        #log.info("full page: %s", res)
+        form = res.forms["deform"]
+        self.assertEqual(form["serial"].value, "") 
