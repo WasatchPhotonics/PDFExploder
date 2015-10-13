@@ -74,14 +74,29 @@ class ThumbnailViews:
             file_content = self.request.POST["file_content"]
             filename = file_content.filename
             self.write_file(serial, "original.pdf", file_content.file)
-            self.pdf_thumbnail(serial)
+            self.generate_pdf_thumbnail(serial)
+            self.generate_mosaic_thumbnail(serial)
         
             return dict(serial=serial, filename=filename)
              
             
         return dict(serial="", filename="")
 
-    def pdf_thumbnail(self, serial):
+    def generate_mosaic_thumbnail(self, serial):
+        """ Convert the uploaded pdf to a wide image of overlaid, titled
+        pages for display as a sort of line of polaroids.
+        """
+        pdf_filename = "%s/%s/original.pdf[0]" % (self.prefix, serial)
+        temp_file = "%s/%s/top_thumbnail.png" % (self.prefix, serial)
+
+        # Create the tile directory if it does not exist
+
+        # delete any previously generated tiles
+
+        
+        
+
+    def generate_pdf_thumbnail(self, serial):
         """  Convert the first page of the designated pdf to png format
         using imagemagick.
         """

@@ -84,11 +84,10 @@ class TestThumbnailViews(unittest.TestCase):
         if os.path.exists(dir_out):
             result = shutil.rmtree(dir_out)
             self.assertIsNone(result)
-   
  
-    def test_add_top_thumbnail_from_pdf(self):
-        # upload a pdf, verify top image is extracted and stored on the
-        # system to be displayed
+    def test_bad_submit_pdf(self):
+        # upload various stages of incomplete form, make sure it fails
+        # according to business rules
         from pdfexploder.views import ThumbnailViews
 
         # Get the add pdf view, verify that the form fields are
@@ -116,7 +115,9 @@ class TestThumbnailViews(unittest.TestCase):
         view_back = inst.add_pdf()
         self.assertEqual(view_back.status_code, 404)
 
-
+ 
+    def test_add_thumbnails_from_pdf(self):
+        from pdfexploder.views import ThumbnailViews
         # Specify a file object, submit it to the view
         serial = "test0123" # slug-friendly serial
         source_file_name = "database/imagery/known_unittest.pdf"
@@ -146,6 +147,13 @@ class TestThumbnailViews(unittest.TestCase):
         view_back = inst.top_thumbnail()
 
         dest_file_name = "database/imagery/test0123/top_thumbnail.png"
+        actual_size = os.path.getsize(dest_file_name)
+        self.assertEqual(view_back.content_length, actual_size)
+        self.assertEqual(view_back.content_type, "image/png")
+
+        # Now verify the mosaic thumbnail has been generated
+
+        dest_file_name = "database/imagery/test0123/mosaic_thumbnail.png"
         actual_size = os.path.getsize(dest_file_name)
         self.assertEqual(view_back.content_length, actual_size)
         self.assertEqual(view_back.content_type, "image/png")
