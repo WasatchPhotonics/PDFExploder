@@ -1,4 +1,5 @@
 import os
+import shutil
 import logging
 
 from pyramid.response import Response, FileResponse
@@ -6,6 +7,7 @@ from pyramid.view import view_config
 
 from slugify import slugify
 
+from wand.image import Image
 
 from sqlalchemy.exc import DBAPIError
 
@@ -56,7 +58,52 @@ class ThumbnailViews:
         """ Display the pdf addition form, accept an uploaded file and
         generation thumbnail representations.
         """
-        return dict(serial="")
+        if "form.submitted" in self.request.params:
+            serial = self.request.POST["serial"] 
+
+            file_content = self.request.POST["file_content"]
+            filename = file_content.filename
+            self.write_file(serial, "original.pdf", file_content.file)
+            self.pdf_thumbnail(serial)
+            
+            return dict(serial=serial, filename=filename)
+             
+            
+        return dict(serial="", filename="")
+
+    def pdf_thumbnail(self, serial):
+        """  Convert the first page of the designated pdf to png format
+        using imagemagick.
+        """
+        pdf_filename = "%s/%s/original.pdf[0]" % (self.prefix, serial)
+
+        temp_file = "%s/%s/top_thumbnail.png" % (self.prefix, serial)
+
+        with Image(filename=pdf_filename) as img:
+            img.resize(306, 396)
+            img.save(filename=temp_file)
+
+        log.info("Saved top thumbnail")
+
+    def write_file(self, serial, destination, upload_file):
+        """ With file from the post request, write to a temporary file,
+        then ultimately to the destination specified.
+        """
+        temp_file = "database/temp_file"
+        upload_file.seek(0)
+        with open(temp_file, "wb") as output_file:
+            shutil.copyfileobj(upload_file, output_file)
+
+
+        final_dir = "%s/%s" % (self.prefix, serial)
+        if not os.path.exists(final_dir):
+            log.info("Make directory: %s", final_dir)
+            os.makedirs(final_dir)
+
+        final_file = "%s/%s" % (final_dir, destination)
+
+        os.rename(temp_file, final_file)
+        log.info("Saved file: %s" % final_file)
 
     @view_config(route_name="top_thumbnail")
     def top_thumbnail(self):

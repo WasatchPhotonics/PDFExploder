@@ -24,6 +24,7 @@ requires = [
     "WebTest",
     "requests",
     "python-slugify",
+    "wand",
     ]
 
 setup(name="pdfexploder",

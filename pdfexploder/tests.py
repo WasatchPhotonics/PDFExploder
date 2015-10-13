@@ -98,6 +98,40 @@ class TestThumbnailViews(unittest.TestCase):
 
         # Verify that the form fields are available
         self.assertEqual(view_back["serial"], "") 
+        self.assertEqual(view_back["filename"], "")
+
+        # Specify a file object, submit it to the view
+        serial = "test0123" # slug-friendly serial
+        source_file_name = "database/imagery/known_unittest.pdf"
+
+        # From:  http://stackoverflow.com/questions/11102432/\
+        # pyramid-writing-unittest-for-file-upload-for
+        class MockStorage(object):
+            log.info("file: %s", source_file_name)
+            file = file(source_file_name)
+            filename = source_file_name
+
+        new_dict = {"form.submitted":"True", "serial":serial,
+                    "file_content":MockStorage()}
+
+        request = testing.DummyRequest(new_dict)
+        inst = ThumbnailViews(request)
+        view_back = inst.add_pdf()
+        self.assertEqual(view_back["serial"], serial)
+        self.assertEqual(view_back["filename"], source_file_name)
+
+        # Call the display view and verify the top page thumbnail has
+        # been generated
+
+        request = testing.DummyRequest()
+        request.matchdict["serial"] = serial
+        inst = ThumbnailViews(request)
+        view_back = inst.top_thumbnail()
+
+        dest_file_name = "database/imagery/test0123/top_thumbnail.png"
+        actual_size = os.path.getsize(dest_file_name)
+        self.assertEqual(view_back.content_length, actual_size)
+        self.assertEqual(view_back.content_type, "image/png")
 
     def test_unexisting_top_thumbnail(self):
         from pdfexploder.views import ThumbnailViews
