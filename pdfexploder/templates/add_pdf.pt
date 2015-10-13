@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>PDFExploder: Add/Edit</title>
+</head>
+<body>
+<h1>PDF:</h1>
+
+<form id="pdf_form" action="${request.route_url('add_pdf')}" method="post" 
+    accept-charset="utf-8" enctype="multipart/form-data">
+  <div class="form-group">
+    Serial: <textarea class="form-control" name="serial" 
+       rows="1" cols="30"></textarea>
+    <BR>
+    <BR>
+    File Data: <input id="file_content" name="file_content" type="file" value="${filename}" />    
+  </div>
+                  
+  <div class="form-group">
+    <button type="submit" name="form.submitted" value="Save" class="btn btn-default">Save</button>
+  </div>
+</form>
+                <form id="new_image" action="othertest" method="post" 
+                    accept-charset="utf-8" enctype="multipart/form-data">
+                  <div class="form-group">
+                    Serial: <textarea class="form-control" name="serial" 
+                        rows="1" cols="30"></textarea>
+                    <BR>
+                    Destination: <textarea class="form-control" name="destination" 
+                      rows="1" cols="30"></textarea>
+                    <BR>
+                    File Data: <input id="file_content" name="file_content" type="file" value="" />    
+      
+                  </div>
+                  <div class="form-group">
+                    <button type="submit" name="form.submitted" value="Save" class="btn btn-default">Save</button>
+                  </div>
+                </form>
+
+</body>
+</html>

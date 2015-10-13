@@ -306,3 +306,22 @@ class FunctionalTests(unittest.TestCase):
         res = self.testapp.get(url, expect_errors=True)
         self.assertEqual(res.status_code, 404)
     
+    def test_form_submission_shows_thumbnails(self):
+        url = "/add_pdf"
+
+        # template shows no image specified text based on serial number
+        res = self.testapp.get(url)
+
+        form = res.forms["pdf_form"]
+        #log.info("Ttoal: %s", res)
+        self.assertEqual(form["serial"].value, "")
+        self.assertEqual(form["file_content"].value, "")
+
+        # After succesful upload, template shows form with fields
+        # pre-populated and thumbnail images
+        source_file = "database/imagery/known_unittest.pdf"
+        form["file_content"] = Upload(source_file) 
+
+        submit_res = form.submit("form.submitted")
+        self.assertEquals(submit_res.status_code, 200)
+ 

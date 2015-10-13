@@ -54,7 +54,8 @@ class ThumbnailViews:
 
         self.request.matchdict["serial"] = slugify(serial)
 
-    @view_config(route_name="add_pdf")
+    @view_config(route_name="add_pdf",
+                 renderer="templates/add_pdf.pt")
     def add_pdf(self):
         """ Display the pdf addition form, accept an uploaded file and
         generation thumbnail representations.
@@ -77,7 +78,6 @@ class ThumbnailViews:
         using imagemagick.
         """
         pdf_filename = "%s/%s/original.pdf[0]" % (self.prefix, serial)
-
         temp_file = "%s/%s/top_thumbnail.png" % (self.prefix, serial)
 
         with Image(filename=pdf_filename) as img:
@@ -95,7 +95,7 @@ class ThumbnailViews:
         with open(temp_file, "wb") as output_file:
             shutil.copyfileobj(upload_file, output_file)
 
-
+        # Create the directory if it does not exist
         final_dir = "%s/%s" % (self.prefix, serial)
         if not os.path.exists(final_dir):
             log.info("Make directory: %s", final_dir)
