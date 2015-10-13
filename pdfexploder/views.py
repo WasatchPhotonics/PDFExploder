@@ -15,7 +15,7 @@ from wand.image import Image
 
 log = logging.getLogger(__name__)
 
-@view_config(route_name="home", renderer="templates/mytemplate.pt")
+@view_config(route_name="home", renderer="templates/home.pt")
 def my_view(request):
     return dict()
 
