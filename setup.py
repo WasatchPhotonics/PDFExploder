@@ -22,6 +22,10 @@ requires = [
     "requests",
     "python-slugify",
     "wand",
+    "colander",
+    "deform",
+    "nose",
+    "coverage",
     ]
 
 setup(name="pdfexploder",
