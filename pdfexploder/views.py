@@ -3,183 +3,119 @@ import sys
 import shutil
 import logging
 
-from subprocess import Popen
+import colander
 
 from pyramid.response import Response, FileResponse
 from pyramid.httpexceptions import HTTPNotFound
 from pyramid.view import view_config
 
+from deform import Form
+from deform.exception import ValidationFailure
+
 from slugify import slugify
 
-from wand.image import Image
+from pdfexploder.models import PDFUploadSchema, EmptyThumbnails
+from pdfexploder.thumbnailgenerator import ThumbnailGenerator
 
 log = logging.getLogger(__name__)
 
-@view_config(route_name="home", renderer="templates/home.pt")
-def my_view(request):
-    return dict()
-
-
-class ThumbnailViews:
+class ThumbnailViews(object):
     """ Return png objects from disk where the serial number is found,
     otherwise return placeholder imagery.
     """
     def __init__(self, request):
         self.request = request
 
-        self.sanitize_parameters()
-        #log.info("About to try serial assignment")
-        self.serial = self.request.matchdict["serial"]
-        self.prefix = "database/imagery"
-        #log.info("Setup with serial %s", self.serial)
-
-    def sanitize_parameters(self):
-        """ slugify the parameters to prevent relative path names in the
-        system.
+    @view_config(route_name="top_thumbnail")
+    def top_thumbnail(self):
+        """ Return the file on disk.
         """
-        #log.info("Sanitize parameters")
-        serial = "unspecified"
-        try:
-            serial = self.request.matchdict["serial"]
-        except KeyError:
-            log.warn("No serial key specified")
+        serial = slugify(self.request.matchdict["serial"])
+        filename = "thumbnails/%s/top.png" % serial
+        return FileResponse(filename)
 
-        self.request.matchdict["serial"] = slugify(serial)
-
-    @view_config(route_name="add_pdf",
-                 renderer="templates/add_pdf.pt")
-    def add_pdf(self):
-        """ Display the pdf addition form, accept an uploaded file and
-        generation thumbnail representations.
+    @view_config(route_name="mosaic_thumbnail")
+    def mosaic_thumbnail(self):
+        """ Return the file on disk.
         """
-        if "form.submitted" in self.request.params:
-            if "serial" not in self.request.params:
-                log.critical("Must submit a serial")
-                return HTTPNotFound()
+        serial = slugify(self.request.matchdict["serial"])
+        filename = "thumbnails/%s/mosaic.png" % serial
+        return FileResponse(filename)
 
-            serial = self.request.POST["serial"] 
-            if serial == "":
-                log.critical("Must populate serial")
-                return HTTPNotFound()
-
-            serial = slugify(serial)
-            file_content = self.request.POST["file_content"]
-            filename = file_content.filename
-            self.write_file(serial, "original.pdf", file_content.file)
-            self.generate_pdf_thumbnail(serial)
-            log.info("Callg enerate mosaic")
-            self.generate_mosaic_thumbnail(serial)
-        
-            return dict(serial=serial, filename=filename)
-             
-            
-        return dict(serial="", filename="")
-
-    def generate_mosaic_thumbnail(self, serial):
-        """ Convert the uploaded pdf to a wide image of overlaid, titled
-        pages for display as a sort of line of polaroids.
+    @view_config(route_name="generate_thumbnails",
+                 renderer="templates/pdfexploder_form.pt")
+    def generate_thumbnails(self):
+        """ Display the form on get, on submission, save the uploaded
+        pdf to the "serial" directory, and return the form populated 
+        along with the generated thumbnails.
         """
-        pdf_filename = "%s/%s/original.pdf" % (self.prefix, serial)
-        tile_dir = "%s/%s/tiles/" % (self.prefix, serial)
+        form = Form(PDFUploadSchema(), buttons=("submit",))
+        data = EmptyThumbnails()
 
-        # delete any previously generated tiles
-        try:
-            log.info("Delete old %s", tile_dir)
-            shutil.rmtree(tile_dir)
-        except OSError, e:
-            log.exception(e)
+        if "submit" in self.request.POST:
+            #log.info("submit: %s", self.request.POST)
 
-        log.info("Make tile directory: %s", tile_dir)
-        os.makedirs(tile_dir)
-      
-        # The with Image concept with wand api and multi page documents
-        # does not seem to handle resizing correctly. Only the last file
-        # is saved with the new filesize. Use command line version
-        # instead
+            controls = self.request.POST.items()
+            try:
+                appstruct = form.validate(controls)
+                rendered_form = form.render(appstruct)
 
-        log.info("Resize pdf pages")
-        wtpage_file = "%s/wt_page.png" % tile_dir
-        cmd_options = ["convert", pdf_filename, wtpage_file]
-       
-            
-        self.pipe = Popen(cmd_options)
-        self.pipe.communicate()
+                self.write_upload_files(appstruct)
+                self.write_thumbnails(appstruct)
 
-       
-        # Is there a python api that supports montage from imagemagick?
-        # As of 2015-10-13 14:29 the only way appears to be calling the
-        # command line version, fortunately installed by default on all
-        # travis system images. 
-        log.info("Combine into polaroid row")
-        wt_files = "%s/wt_*.png" % tile_dir
-        out_file = "%s/%s/mosaic_thumbnail.png" % (self.prefix, serial)
-        cmd_options = ["montage",  wt_files,  
-                       "+polaroid",
-                       "-tile", "9x1",  
-                       "-geometry", "-10+2", 
-                       "-resize", "10%", out_file]
+                return {"form":rendered_form, "appstruct":appstruct}
 
-        self.pipe = Popen(cmd_options)
-        self.pipe.communicate()
-        
+            except ValidationFailure as e: 
+                log.info("Validation failure")
+                return {'form':e.render()} 
 
-    def generate_pdf_thumbnail(self, serial):
-        """  Convert the first page of the designated pdf to png format
-        using imagemagick.
+        return {"form":form.render()}
+
+    def write_thumbnails(self, appstruct):
+        """ Create the output filenames and generate the top and mosaic
+        thumbnails and write them to disk.
         """
-        pdf_filename = "%s/%s/original.pdf[0]" % (self.prefix, serial)
-        temp_file = "%s/%s/top_thumbnail.png" % (self.prefix, serial)
+        slugser = slugify(appstruct["serial"])
+        pdf_filename = "thumbnails/%s/uploaded.pdf" % slugser
+        top_file = "thumbnails/%s/top.png" % slugser
+        mos_file = "thumbnails/%s/mosaic.png" % slugser
+                        
+        thumg = ThumbnailGenerator(pdf_filename)
+        self.save_blob(thumg.top_thumbnail(), top_file)
+        self.save_blob(thumg.mosaic_thumbnail(), mos_file)
 
-        with Image(filename=pdf_filename) as img:
-            img.resize(306, 396)
-            img.save(filename=temp_file)
-
-        log.info("Saved top thumbnail")
-
-    def write_file(self, serial, destination, upload_file):
-        """ With file from the post request, write to a temporary file,
-        then ultimately to the destination specified.
+    def save_blob(self, img_blob, filename):
+        """ Expect a binary blob of image data from wand and a filename.
+        Write the binary blob to the file.
         """
-        temp_file = "database/temp_file"
-        upload_file.seek(0)
-        with open(temp_file, "wb") as output_file:
-            shutil.copyfileobj(upload_file, output_file)
+        out_file = open(filename, "wb")
+        out_file.write(img_blob)
+        out_file.close()
 
+    def write_upload_files(self, appstruct):
+        """ With parameters in the post request, create a destination
+        directory then write the uploaded file to a hardcoded filename.
+        """
+ 
         # Create the directory if it does not exist
-        final_dir = "%s/%s" % (self.prefix, serial)
+        final_dir = "thumbnails/%s" % slugify(appstruct["serial"])
         if not os.path.exists(final_dir):
             log.info("Make directory: %s", final_dir)
             os.makedirs(final_dir)
 
-        final_file = "%s/%s" % (final_dir, destination)
+        final_file = "%s/uploaded.pdf" % final_dir
+        file_pointer = appstruct["pdf_upload"]["fp"]
+        self.single_file_write(file_pointer, final_file)
 
-        os.rename(temp_file, final_file)
-        log.info("Saved file: %s" % final_file)
-
-    @view_config(route_name="top_thumbnail")
-    def top_thumbnail(self):
-        """ Display the top page thumbnail of the specified pdf if it
-        exists.
+    def single_file_write(self, file_pointer, filename):
+        """ Read from the file pointer, write intermediate file, and
+        then copy to final destination.
         """
-        file_name = "%s/%s/top_thumbnail.png" \
-                    % (self.prefix, self.serial)
-        location = "%s/top_placeholder.png" % self.prefix
+        temp_file = "resources/temp_file"
 
-        if os.path.exists(file_name):
-            location = file_name
+        file_pointer.seek(0)
+        with open(temp_file, "wb") as output_file:
+            shutil.copyfileobj(file_pointer, output_file)
 
-        return FileResponse(location)
-
-    @view_config(route_name="mosaic_thumbnail")
-    def mosaic_thumbnail(self):
-        """ Display the mosaic multi page thumbnail of the pdf if it
-        exists.
-        """
-        file_name = "%s/%s/mosaic_thumbnail.png" \
-                    % (self.prefix, self.serial)
-        location = "%s/mosaic_placeholder.png" % self.prefix
-
-        if os.path.exists(file_name):
-            location = file_name
-
-        return FileResponse(location)
+        os.rename(temp_file, filename)
+        log.info("Saved file: %s", filename) 

@@ -1,3 +1,5 @@
+""" unit and functional tests for the pdfexploder application
+"""
 import os
 import sys
 import shutil
@@ -9,233 +11,213 @@ from pyramid import testing
 
 from webtest import TestApp, Upload
 
+from slugify import slugify
 
-log = logging.getLogger()                                                             
-log.setLevel(logging.DEBUG)                                                           
-                                                                                      
-strm = logging.StreamHandler(sys.stderr)                                              
-frmt = logging.Formatter("%(name)s - %(levelname)s %(message)s")                      
-strm.setFormatter(frmt)                                                               
-log.addHandler(strm)    
+from coverageutils import file_range, size_range
+from pdfexploder.thumbnailgenerator import ThumbnailGenerator
 
 
-def register_routes(config):
-    """ match the configuration in __init__ (a pyramid tutorials
-    convention), to allow the unit tests to use the routes.
+# Specify stdout as the logging output stream to reduce verbosity in the
+# nosetest output. This will let you still see all of logging when
+# running with python -u -m unittest, yet swallow it all in nosetest.
+log = logging.getLogger()
+log.setLevel(logging.INFO)
+strm = logging.StreamHandler(sys.stdout)
+frmt = logging.Formatter("%(name)s - %(levelname)s %(message)s")
+strm.setFormatter(frmt)
+log.addHandler(strm)
+
+class DeformMockFieldStorage(object):
+    """ Create a storage object that references a file for use in
+    view unittests. Deform/colander requires a dictionary to address the
+    multiple upload fields. This is not required for 'plain' html file
+    uploads.
     """
-    config.add_route("home_view", "/")
-    config.add_route("top_thumbnail", "top_thumbnail/{serial}")
-    config.add_route("mosaic_thumbnail", "mosaic_thumbnail/{serial}")
+    def __init__(self, source_file_name):
+        self.filename = source_file_name
+        self.file = file(self.filename)
+        self.type = "file"
+        self.length = os.path.getsize(self.filename)
 
+
+class TestCoverageUtils(unittest.TestCase):
+    def test_file_does_not_exist(self):
+        filename = "known_unknown_file"
+        self.assertFalse(file_range(filename, 10000))
+
+    def test_file_sizes_out_of_range(self):
+        filename = "resources/known_unittest.pdf"
+        self.assertFalse(file_range(filename, 1250000)) #small
+        self.assertFalse(file_range(filename, 1190000)) #large
+
+class TestThumbnailGenerator(unittest.TestCase):
+    def test_invalid_pdf_throws_exception(self):
+        filename = "knowndoesnotexist"
+        self.assertRaises(IOError, ThumbnailGenerator, filename)
+
+    def test_valid_pdf_does_not_throw_exception(self):
+        filename = "resources/known_unittest.pdf"
+        thumg = ThumbnailGenerator(filename)
+        self.assertEqual(filename, thumg.filename)
+
+    def test_top_page_thumbnail_from_pdf(self):
+        filename = "resources/known_unittest.pdf"
+        thumg = ThumbnailGenerator(filename)
+        png_img = thumg.top_thumbnail()
+        self.assertEqual(len(png_img), 105238)
+
+    def test_mosaic_thumbnail_from_pdf(self):
+        filename = "resources/known_unittest.pdf"
+        thumg = ThumbnailGenerator(filename)
+        png_img = thumg.mosaic_thumbnail()
+        # Image has randomized components
+        self.assertTrue(size_range(len(png_img), 21000, ok_range=2000))
 
 class TestThumbnailViews(unittest.TestCase):
     def setUp(self):
         # Clean any existing test files
         self.clean_test_files()
         self.config = testing.setUp()
-        register_routes(self.config)
 
     def tearDown(self):
         # Comment out this line for easier post-test state inspections
-        self.clean_test_files()
+        #self.clean_test_files()
         testing.tearDown()
 
     def clean_test_files(self):
         # Remove the directory if it exists
-        dir_out = "database/imagery/test0123"
-        if os.path.exists(dir_out):
-            result = shutil.rmtree(dir_out)
-            self.assertIsNone(result)
+        test_serials = ["ut1234"]
 
-        dir_out = "database/imagery/functest1234"
-        if os.path.exists(dir_out):
-            result = shutil.rmtree(dir_out)
-            self.assertIsNone(result)
+        for item in test_serials:
+            dir_out = "thumbnails/%s" % slugify(item)
+            if os.path.exists(dir_out):
+                shutil.rmtree(dir_out)
+        
+    def test_get_returns_default_form(self):
+        from pdfexploder.views import ThumbnailViews
+        request = testing.DummyRequest()
+        inst = ThumbnailViews(request)
+        result = inst.generate_thumbnails()
+        self.assertIsNone(result.get("appstruct"))
+
+    def test_serial_missing_or_empty_is_failure(self):
+        from pdfexploder.views import ThumbnailViews
+
+        post_dict = {"submit":"submit"}
+        request = testing.DummyRequest(post_dict)
+        inst = ThumbnailViews(request)
+        result = inst.generate_thumbnails()
+        self.assertIsNone(result.get("appstruct"))
+
+        post_dict = {"submit":"submit", "serial":""}
+        request = testing.DummyRequest(post_dict)
+        inst = ThumbnailViews(request)
+        result = inst.generate_thumbnails()
+        self.assertIsNone(result.get("appstruct"))
+
+    def test_file_missing_or_empty_is_failure(self):
+        from pdfexploder.views import ThumbnailViews
+
+        post_dict = {"submit":"submit", "serial":"UT1234"}
+        request = testing.DummyRequest(post_dict)
+        inst = ThumbnailViews(request)
+        result = inst.generate_thumbnails()
+        self.assertIsNone(result.get("appstruct"))
+
+        pdf_upload_dict = {"upload":""}
+        post_dict = {"submit":"submit", "serial":"UT1234",
+                     "pdf_upload":pdf_upload_dict}
+        request = testing.DummyRequest(post_dict)
+        inst = ThumbnailViews(request)
+        result = inst.generate_thumbnails()
+        self.assertIsNone(result.get("appstruct"))
+
+    def test_serial_and_file_is_passing(self):
+        from pdfexploder.views import ThumbnailViews
+
+        pdf_name = "resources/known_unittest.pdf"
+        pdf_file = DeformMockFieldStorage(pdf_name)
+        pdf_upload_dict = {"upload":pdf_file}
  
-    def test_bad_submit_pdf(self):
-        # upload various stages of incomplete form, make sure it fails
-        # according to business rules
-        from pdfexploder.views import ThumbnailViews
-
-        # Get the add pdf view, verify that the form fields are
-        # available
-        request = testing.DummyRequest()
+        post_dict = {"submit":"submit", "serial":"UT1234",
+                     "pdf_upload":pdf_upload_dict}
+        request = testing.DummyRequest(post_dict)
         inst = ThumbnailViews(request)
-        view_back = inst.add_pdf()
-
-        # Verify that the form fields are available
-        self.assertEqual(view_back["serial"], "") 
-        self.assertEqual(view_back["filename"], "")
-
-        # Attempt to submit without specifying a serial number field,
-        # expect a failure
-        new_dict = {"form.submitted":"True"}
-        request = testing.DummyRequest(new_dict)
-        inst = ThumbnailViews(request)
-        view_back = inst.add_pdf()
-        self.assertEqual(view_back.status_code, 404)
+        result = inst.generate_thumbnails()
+        self.assertIsNotNone(result.get("appstruct"))
        
-        # Attempt submit specifying blank serial 
-        new_dict = {"form.submitted":"True", "serial":""}
-        request = testing.DummyRequest(new_dict)
-        inst = ThumbnailViews(request)
-        view_back = inst.add_pdf()
-        self.assertEqual(view_back.status_code, 404)
+        appstruct = result.get("appstruct") 
+        self.assertEqual(appstruct["serial"], post_dict["serial"])
 
-    def test_add_thumbnails_from_pdf(self):
+        up_name = appstruct["pdf_upload"]["fp"].name
+        mock_name = pdf_file.filename
+
+        self.assertEqual(up_name, mock_name)
+
+    def test_post_serial_and_pdf_uploads_file_to_hardcoded_name(self):
         from pdfexploder.views import ThumbnailViews
-        # Specify a file object, submit it to the view
-        serial = "test0123" # slug-friendly serial
-        source_file_name = "database/imagery/work_ticket_test.pdf"
 
-        # From:  http://stackoverflow.com/questions/11102432/\
-        # pyramid-writing-unittest-for-file-upload-for
-        class MockStorage(object):
-            log.info("file: %s", source_file_name)
-            file = file(source_file_name)
-            filename = source_file_name
-
-        new_dict = {"form.submitted":"True", "serial":serial,
-                    "file_content":MockStorage()}
-
-        request = testing.DummyRequest(new_dict)
+        pdf_name = "resources/known_unittest.pdf"
+        pdf_file = DeformMockFieldStorage(pdf_name)
+        pdf_upload_dict = {"upload":pdf_file}
+ 
+        post_dict = {"submit":"submit", "serial":"UT1234",
+                     "pdf_upload":pdf_upload_dict}
+        request = testing.DummyRequest(post_dict)
         inst = ThumbnailViews(request)
-        view_back = inst.add_pdf()
-        self.assertEqual(view_back["serial"], serial)
-        self.assertEqual(view_back["filename"], source_file_name)
+        result = inst.generate_thumbnails()
+       
+        dest_top = "thumbnails/ut1234/uploaded.pdf"
+        self.assertTrue(file_range(dest_top, 1210163))
 
-        # Call the display view and verify the top page thumbnail has
-        # been generated
-        request = testing.DummyRequest()
-        request.matchdict["serial"] = serial
-        inst = ThumbnailViews(request)
-        view_back = inst.top_thumbnail()
-
-        dest_file_name = "database/imagery/test0123/top_thumbnail.png"
-        actual_size = os.path.getsize(dest_file_name)
-        self.assertEqual(view_back.content_length, actual_size)
-        self.assertEqual(view_back.content_type, "image/png")
-
-        # Now verify the mosaic thumbnail has been generated
-        dest_file_name = "database/imagery/test0123/mosaic_thumbnail.png"
-        view_back = inst.mosaic_thumbnail()
-        actual_size = os.path.getsize(dest_file_name)
-        self.assertEqual(view_back.content_length, actual_size)
-        self.assertEqual(view_back.content_type, "image/png")
-
-        # Run it again to ensure that the mosaic tiles are deleted
-        log.info("About to call again")
-        request = testing.DummyRequest()
-        request.matchdict["serial"] = serial
-        inst = ThumbnailViews(request)
-
-        dest_file_name = "database/imagery/test0123/mosaic_thumbnail.png"
-        view_back = inst.mosaic_thumbnail()
-        actual_size = os.path.getsize(dest_file_name)
-        self.assertEqual(view_back.content_length, actual_size)
-        self.assertEqual(view_back.content_type, "image/png")
-
-    def test_unexisting_top_thumbnail(self):
+    def test_correct_post_generates_thumbnails_on_disk(self):
         from pdfexploder.views import ThumbnailViews
-        # Request the top of the pdf thumbnail, expect a placeholder png
-        # if that device does not exist on disk
 
-        # Get size of actual file on disk, compare
-        file_name = "database/imagery/top_placeholder.png"
-        actual_size = os.path.getsize(file_name)
+        pdf_name = "resources/known_unittest.pdf"
+        pdf_file = DeformMockFieldStorage(pdf_name)
+        pdf_upload_dict = {"upload":pdf_file}
+ 
+        post_dict = {"submit":"submit", "serial":"UT1234",
+                     "pdf_upload":pdf_upload_dict}
+        request = testing.DummyRequest(post_dict)
+        inst = ThumbnailViews(request)
+        result = inst.generate_thumbnails()
+       
+        dest_top = "thumbnails/ut1234/top.png"
+        self.assertTrue(file_range(dest_top, 105238))
+       
+        dest_top = "thumbnails/ut1234/mosaic.png"
+        self.assertTrue(file_range(dest_top, 21000, ok_range=2000))
+
+    def test_post_view_of_thumbnails_files_accessible(self):
+        from pdfexploder.views import ThumbnailViews
+
+        pdf_name = "resources/known_unittest.pdf"
+        pdf_file = DeformMockFieldStorage(pdf_name)
+        pdf_upload_dict = {"upload":pdf_file}
+ 
+        post_dict = {"submit":"submit", "serial":"UT1234",
+                     "pdf_upload":pdf_upload_dict}
+        request = testing.DummyRequest(post_dict)
+        inst = ThumbnailViews(request)
+        result = inst.generate_thumbnails()
 
         request = testing.DummyRequest()
-        request.matchdict["serial"] = "BADDevice123"
+        request.matchdict["serial"] = "UT1234"
         inst = ThumbnailViews(request)
-        view_back = inst.top_thumbnail()
 
-        self.assertEqual(view_back.content_length, actual_size)
-        self.assertEqual(view_back.content_type, "image/png")
+        result = inst.top_thumbnail()
+        self.assertEqual(result.content_length, 105238)    
+
+        # Mosaic has randomization
+        result = inst.mosaic_thumbnail()
+        img_size = result.content_length
+        self.assertTrue(size_range(img_size, 21000, ok_range=2000))
         
-        # Specify a known existing file with a relative pathname, verify
-        # it is unavailable by expecting the file size of the
-        # placeholder image
-        file_name = "database/imagery/../_empty_directory_required_"
-        request.matchdict["serial"] = file_name 
-        inst = ThumbnailViews(request)
-        view_back = inst.top_thumbnail()
-        
-        self.assertEqual(view_back.content_length, actual_size)
-        self.assertEqual(view_back.content_type, "image/png")
-
-    def test_existing_top_thumbnail(self):
-        from pdfexploder.views import ThumbnailViews
-        # Add a known file into the imagery folder
-        serial = "test0123" # slug-friendly serial
-        dir_name = "database/imagery/%s" % serial
-        dest_file = "%s/top_thumbnail.png" % dir_name
-        src_file = "database/imagery/known_top_image.png"
-
-        result = os.makedirs(dir_name)
-        result = shutil.copy(src_file, dest_file) 
-
-        # Verify that it can be viewed
-        request = testing.DummyRequest()
-        request.matchdict["serial"] = serial
-        inst = ThumbnailViews(request)
-        view_back = inst.top_thumbnail()
-
-        actual_size = os.path.getsize(src_file)
-        self.assertEqual(view_back.content_length, actual_size)
-        self.assertEqual(view_back.content_type, "image/png")
-
-    def test_unexisting_mosaic_thumbnail(self):
-        from pdfexploder.views import ThumbnailViews
-        # Request the mosaic thumbnail of the pdf, expect a placeholder
-        # png if that device does not exist on disk
-
-        # Get size of actual file on disk, compare
-        file_name = "database/imagery/mosaic_placeholder.png"
-        actual_size = os.path.getsize(file_name)
-
-        request = testing.DummyRequest()
-        request.matchdict["serial"] = "BADDevice111"
-        inst = ThumbnailViews(request)
-        view_back = inst.mosaic_thumbnail()
-
-        self.assertEqual(view_back.content_length, actual_size)
-        self.assertEqual(view_back.content_type, "image/png")
-
-        # Specify a known existing file with a relative pathname, verify
-        # it is unavailable by expecting the file size of the
-        # placeholder image
-        file_name = "database/imagery/../_empty_directory_required_"
-        request.matchdict["serial"] = file_name 
-        inst = ThumbnailViews(request)
-        view_back = inst.mosaic_thumbnail()
-        
-        self.assertEqual(view_back.content_length, actual_size)
-        self.assertEqual(view_back.content_type, "image/png")
-
-    def test_existing_mosaic_thumbnail(self):
-        from pdfexploder.views import ThumbnailViews
-        # Add a known file into the imagery folder
-        serial = "test0123" # slug-friendly serial
-        dir_name = "database/imagery/%s" % serial
-        dest_file = "%s/mosaic_thumbnail.png" % dir_name
-        src_file = "database/imagery/known_mosaic_image.png"
-
-        result = os.makedirs(dir_name)
-        result = shutil.copy(src_file, dest_file) 
-
-        # Verify that it can be viewed
-        request = testing.DummyRequest()
-        request.matchdict["serial"] = serial
-        inst = ThumbnailViews(request)
-        view_back = inst.mosaic_thumbnail()
-
-        actual_size = os.path.getsize(src_file)
-        self.assertEqual(view_back.content_length, actual_size)
-        self.assertEqual(view_back.content_type, "image/png")
-
 
 class FunctionalTests(unittest.TestCase):
     def setUp(self):
+        self.clean_test_files()
         from pdfexploder import main
         settings = {}
         app = main({}, **settings)
@@ -244,72 +226,82 @@ class FunctionalTests(unittest.TestCase):
     def tearDown(self):
         del self.testapp
 
-    def test_root(self):
+    def clean_test_files(self):
+        # Remove the directory if it exists
+        test_serials = ["ft789"]
+
+        for item in test_serials:
+            dir_out = "thumbnails/%s" % slugify(item)
+            if os.path.exists(dir_out):
+                shutil.rmtree(dir_out)
+
+    def test_home_form_starts_empty_placeholders_visible(self):
         res = self.testapp.get("/")
-        #log.info("Root res: %s", res)
         self.assertEqual(res.status_code, 200)
-        self.assertTrue("pdfexploder" in res.body)
 
-    def test_top_level_image(self):
-
-        url = "/top_thumbnail"
-
-        # known unknown serial is placeholder
-        serial = "knowitsbad"
-        res = self.testapp.get("%s/%s" % (url, serial))
-        self.assertEqual(res.status_code, 200)
-        self.assertEqual(res.content_type, "image/png")
-        # Why are you doing this in the unit and in the functional test?
-        self.assertEqual(res.content_length, 36090)
-
-   
-        # non-existent serial - why does this return an exception
-        # instead of an actual 404? Because you need expect_errors:
-        # https://github.com/django-webtest/django-webtest/issues/30
-        res = self.testapp.get("%s" % url, expect_errors=True)
-        self.assertEqual(res.status_code, 404)
-
-    def test_mosaic_image(self):
-        url = "/mosaic_thumbnail"
-
-        # known unkonwn serial is a placeholder
-        serial = "badmosaic"
-        res = self.testapp.get("%s/%s" % (url, serial))
-        self.assertEqual(res.status_code, 200)
-        self.assertEqual(res.content_type, "image/png")
-        self.assertEqual(res.content_length, 57037)
-        
-        # Expect an error on non-existent serial
-        res = self.testapp.get(url, expect_errors=True)
-        self.assertEqual(res.status_code, 404)
-    
-    def test_form_submission_shows_thumbnails(self):
-        url = "/add_pdf"
-
-        # template shows no image specified text based on serial number
-        res = self.testapp.get(url)
-
-        # Form is not populated
-        form = res.forms["pdf_form"]
+        form = res.forms["deform"]
         self.assertEqual(form["serial"].value, "")
-        self.assertEqual(form["file_content"].value, "")
 
-        # Image links do not exist
-        self.assertTrue("top_thumbnail.png" not in res)
-        self.assertTrue("mosaic_thumbnail.png" not in res)
+        indexed_form_name = form.get("upload", 0).name
+        self.assertEqual(indexed_form_name, "upload")
 
-        # After succesful upload, template shows form with fields
-        # pre-populated and thumbnail images
-        source_file = "database/imagery/known_unittest.pdf"
-        test_serial = "functest1234"
-        form["serial"] = test_serial
-        form["file_content"] = Upload(source_file) 
+        match_mosaic = "assets/img/known_mosaic_image.png"
+        self.assertTrue(match_mosaic in res.body)
 
-        submit_res = form.submit("form.submitted")
-        self.assertEquals(submit_res.status_code, 200)
+        match_top = "assets/img/known_top_image.png"
+        self.assertTrue(match_top in res.body)
 
-        top_link = "top_thumbnail/%s" % test_serial
-        self.assertTrue(top_link in submit_res)
+    def test_imagery_placeholders_are_accessible(self):
+        res = self.testapp.get("/assets/img/known_top_image.png")
+        self.assertEqual(res.status_code, 200)
 
-        mos_link = "mosaic_thumbnail/%s" % test_serial
-        self.assertTrue(mos_link in submit_res)
+        res = self.testapp.get("/assets/img/known_mosaic_image.png")
+        self.assertEqual(res.status_code, 200)
+
+    def test_submit_with_no_values_has_error_messages(self):
+        res = self.testapp.get("/")
+        form = res.forms["deform"]
+        submit_res = form.submit("submit")
+        self.assertTrue("was a problem with your" in submit_res.body) 
+
+    def test_submit_with_serial_but_no_pdf_has_error_message(self):
+        res = self.testapp.get("/")
+        form = res.forms["deform"]
+        form["serial"] = "okserial"
+        submit_res = form.submit("submit")
+        self.assertTrue("was a problem with your" in submit_res.body) 
+
+    def test_submit_with_pdf_but_no_serial_has_error_message(self):
+        res = self.testapp.get("/")
+        form = res.forms["deform"]
+        form.set("upload", Upload("resources/known_unittest.pdf"), 0)
+        submit_res = form.submit("submit")
+        self.assertTrue("was a problem with your" in submit_res.body)
+
+    def test_submit_with_all_values_has_no_error_messages(self):
+        res = self.testapp.get("/")
+        form = res.forms["deform"]
+        form["serial"] = "ft789"
+        form.set("upload", Upload("resources/known_unittest.pdf"), 0)
+        submit_res = form.submit("submit")
+        self.assertTrue("was a problem with" not in submit_res.body)
+
+    def test_submit_with_all_values_image_links_available(self):
+        res = self.testapp.get("/")
+        form = res.forms["deform"]
+        form["serial"] = "ft789"
+        form.set("upload", Upload("resources/known_unittest.pdf"), 0)
+        submit_res = form.submit("submit")
+
+        top_link = "img src=\"/top/ft789"
+        self.assertTrue(top_link in submit_res.body)
+ 
+        res = self.testapp.get("/top/ft789")
+        self.assertEqual(res.content_length, 105238)
+        
+        mosaic_link = "img src=\"/mosaic/ft789"
+        self.assertTrue(mosaic_link in submit_res.body)
+
+        res = self.testapp.get("/mosaic/ft789")
+        img_size = res.content_length
+        self.assertTrue(size_range(img_size, 21000, ok_range=2000))

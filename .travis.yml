@@ -6,12 +6,5 @@ install:
   - pip install coveralls
   - "python setup.py develop"
 # command to run tests
-# Add exclusion of scripts folder to match other project structures yet
-# still have coveralls/travis not include the cookbook/scripts folder so
-# that 100% coverage badge is available. May require deleting and
-# re-adding the repo to coveralls so it loses references to the scripts
-# folder
-# Looks like you need to move everything you don't want tested outside
-# the cookbook folder
 script: nosetests --cover-erase --with-coverage --cover-package=pdfexploder 
 after_success: coveralls
