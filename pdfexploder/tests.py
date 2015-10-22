@@ -64,7 +64,8 @@ class TestThumbnailGenerator(unittest.TestCase):
         filename = "resources/known_unittest.pdf"
         thumg = ThumbnailGenerator(filename)
         png_img = thumg.top_thumbnail()
-        self.assertEqual(len(png_img), 105238)
+        img_size = len(png_img)
+        self.assertTrue(size_range(img_size, 105238, ok_range=5000))
 
     def test_mosaic_thumbnail_from_pdf(self):
         filename = "resources/known_unittest.pdf"
@@ -184,7 +185,7 @@ class TestThumbnailViews(unittest.TestCase):
         result = inst.generate_thumbnails()
        
         dest_top = "thumbnails/ut1234/top.png"
-        self.assertTrue(file_range(dest_top, 105238))
+        self.assertTrue(file_range(dest_top, 105238, ok_range=5000))
        
         dest_top = "thumbnails/ut1234/mosaic.png"
         self.assertTrue(file_range(dest_top, 21000, ok_range=2000))
@@ -207,7 +208,8 @@ class TestThumbnailViews(unittest.TestCase):
         inst = ThumbnailViews(request)
 
         result = inst.top_thumbnail()
-        self.assertEqual(result.content_length, 105238)    
+        img_size = result.content_length
+        self.assertTrue(size_range(img_size, 105238, ok_range=5000))
 
         # Mosaic has randomization
         result = inst.mosaic_thumbnail()
@@ -297,7 +299,8 @@ class FunctionalTests(unittest.TestCase):
         self.assertTrue(top_link in submit_res.body)
  
         res = self.testapp.get("/top/ft789")
-        self.assertEqual(res.content_length, 105238)
+        img_size = res.content_length
+        self.assertTrue(size_range(img_size, 105238, ok_range=5000))
         
         mosaic_link = "img src=\"/mosaic/ft789"
         self.assertTrue(mosaic_link in submit_res.body)
