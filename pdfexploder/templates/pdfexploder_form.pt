@@ -1,99 +1,115 @@
 <!DOCTYPE html>
-<html lang="${request.locale_name}">
-    <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>PDF Exploder web application</title>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other
+         head content must come *after* these tags -->
+    <title>PDF Exploder web application</title>
 
-        <!-- CSS -->
-        <link rel="stylesheet" href="${request.static_url('pdfexploder:assets/css/pygments.css')}" type="text/css">
-        <link rel="stylesheet" href="${request.static_url('pdfexploder:assets/css/form.css')}" type="text/css">
-        <link rel="stylesheet" href="${request.static_url('pdfexploder:assets/css/bootstrap.css')}" type="text/css" media="screen" charset="utf-8">
-        <link rel="stylesheet" href="${request.static_url('pdfexploder:assets/css/custom.css')}" type="text/css">
+    <!-- Bootstrap -->
+    <link href="${request.static_url('pdfexploder:assets/css/bootstrap.min.css')}" rel="stylesheet">
 
-        <!-- JavaScript -->
-        <script type="text/javascript" src="${request.static_url('pdfexploder:assets/js/jquery-2.0.3.min.js')}"></script>
-        <script type="text/javascript" src="${request.static_url('pdfexploder:assets/js/bootstrap.min.js')}"></script>
-        <script type="text/javascript" src="${request.static_url('pdfexploder:assets/js/deform.js')}"></script>
-        <script type="text/javascript" src="${request.static_url('pdfexploder:assets/js/jquery.form-3.09.js')}"></script>
-        <script type="text/javascript" src="${request.static_url('pdfexploder:assets/js/jquery.maskedinput-1.3.1.min.js')}"></script>
-       
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and
+         media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via
+         file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
 
-        <script>
-            function fadeIn(obj) {
-                $(obj).fadeIn(1000);
-            }
-        </script>
+    <!-- faviconagraphy -->
+    <link rel="apple-touch-icon" sizes="57x57" href="${request.static_url('pdfexploder:assets/img/apple-icon-57x57.png')}">
+    <link rel="apple-touch-icon" sizes="60x60" href="${request.static_url('pdfexploder:assets/img/apple-icon-60x60.png')}">
+    <link rel="apple-touch-icon" sizes="72x72" href="${request.static_url('pdfexploder:assets/img/apple-icon-72x72.png')}">
+    <link rel="apple-touch-icon" sizes="76x76" href="${request.static_url('pdfexploder:assets/img/apple-icon-76x76.png')}">
+    <link rel="apple-touch-icon" sizes="114x114" href="${request.static_url('pdfexploder:assets/img/apple-icon-114x114.png')}">
+    <link rel="apple-touch-icon" sizes="120x120" href="${request.static_url('pdfexploder:assets/img/apple-icon-120x120.png')}">
+    <link rel="apple-touch-icon" sizes="144x144" href="${request.static_url('pdfexploder:assets/img/apple-icon-144x144.png')}">
+    <link rel="apple-touch-icon" sizes="152x152" href="${request.static_url('pdfexploder:assets/img/apple-icon-152x152.png')}">
+    <link rel="apple-touch-icon" sizes="180x180" href="${request.static_url('pdfexploder:assets/img/apple-icon-180x180.png')}">
+    <link rel="icon" type="image/png" sizes="192x192" href="${request.static_url('pdfexploder:assets/img/android-icon-192x192.png')}">
+    <link rel="icon" type="image/png" sizes="32x32" href="${request.static_url('pdfexploder:assets/img/favicon-32x32.png')}">
+    <link rel="icon" type="image/png" sizes="96x96" href="${request.static_url('pdfexploder:assets/img/favicon-96x96.png')}">
+    <link rel="icon" type="image/png" sizes="16x16" href="${request.static_url('pdfexploder:assets/img/favicon-16x16.png')}">
+    <link rel="manifest" href="${request.static_url('pdfexploder:assets/img/manifest.json')}">
+    <meta name="msapplication-TileColor" content="#ffffff">
+    <meta name="msapplication-TileImage" content="${request.static_url('pdfexploder:assets/img/ms-icon-144x144.png')}">
+    <meta name="theme-color" content="#ffffff">
+  </head>
+  <body>
+    <div class="container">
 
-        <!-- faviconagraphy -->
-        <link rel="apple-touch-icon" sizes="57x57" href="${request.static_url('pdfexploder:assets/img/apple-icon-57x57.png')}">
-        <link rel="apple-touch-icon" sizes="60x60" href="${request.static_url('pdfexploder:assets/img/apple-icon-60x60.png')}">
-        <link rel="apple-touch-icon" sizes="72x72" href="${request.static_url('pdfexploder:assets/img/apple-icon-72x72.png')}">
-        <link rel="apple-touch-icon" sizes="76x76" href="${request.static_url('pdfexploder:assets/img/apple-icon-76x76.png')}">
-        <link rel="apple-touch-icon" sizes="114x114" href="${request.static_url('pdfexploder:assets/img/apple-icon-114x114.png')}">
-        <link rel="apple-touch-icon" sizes="120x120" href="${request.static_url('pdfexploder:assets/img/apple-icon-120x120.png')}">
-        <link rel="apple-touch-icon" sizes="144x144" href="${request.static_url('pdfexploder:assets/img/apple-icon-144x144.png')}">
-        <link rel="apple-touch-icon" sizes="152x152" href="${request.static_url('pdfexploder:assets/img/apple-icon-152x152.png')}">
-        <link rel="apple-touch-icon" sizes="180x180" href="${request.static_url('pdfexploder:assets/img/apple-icon-180x180.png')}">
-        <link rel="icon" type="image/png" sizes="192x192" href="${request.static_url('pdfexploder:assets/img/android-icon-192x192.png')}">
-        <link rel="icon" type="image/png" sizes="32x32" href="${request.static_url('pdfexploder:assets/img/favicon-32x32.png')}">
-        <link rel="icon" type="image/png" sizes="96x96" href="${request.static_url('pdfexploder:assets/img/favicon-96x96.png')}">
-        <link rel="icon" type="image/png" sizes="16x16" href="${request.static_url('pdfexploder:assets/img/favicon-16x16.png')}">
-        <link rel="manifest" href="${request.static_url('pdfexploder:assets/img/manifest.json')}">
-        <meta name="msapplication-TileColor" content="#ffffff">
-        <meta name="msapplication-TileImage" content="${request.static_url('pdfexploder:assets/img/ms-icon-144x144.png')}">
-        <meta name="theme-color" content="#ffffff">
-    </head>
-
-    <body id="public">
-
-        <div class="navbar navbar-default" role="navigation">
-            <div class="container">
-                <a class="navbar-brand" href="/">
-                    <img src="${request.static_url('pdfexploder:assets/img/favicon-32x32.png')}">
-                    PDF Exploder Web Application
-                </a>
-            </div>
+      <nav class="navbar navbar-default">
+        <div class="container-fluid">
+          <div class="navbar-header">
+            <a class="navbar-brand" href="#">
+              <img alt="Brand" src="${request.static_url('pdfexploder:assets/img/favicon-32x32.png')}">
+              <a class="navbar-brand" href="#">PDF Exploder</a>
+            </a>
+          </div>
         </div>
-    
-        <div class="container">
-            <div class="row">
-                <div class="col-md-4">
-                    <div class="panel panel-primary">
-                        <div class="panel-heading">
-                            <h3 class="panel-title">Enter parameters</h3>
-                        </div>
-                        <div class="panel-body">
-                            <span tal:replace="structure form"/>
-                            <BR>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-5">
-                    <div class="panel panel-success">
-                        <div class="panel-heading">
-                            <h3 class="panel-title">Generated report</h3>
-                        </div>
-                        <div class="panel-body">
-                            <div>
-                                <span tal:condition="not:exists: appstruct">
-                                    <img src="${request.static_url('pdfexploder:assets/img/known_mosaic_image.png')}">
-                                    <img src="${request.static_url('pdfexploder:assets/img/known_top_image.png')}">
-                                </span>
-                                <span tal:condition="exists: appstruct">
-                                    <img src="${request.route_path('top_thumbnail', serial=appstruct['serial'])}">
-                                    <img src="${request.route_path('mosaic_thumbnail', serial=appstruct['serial'])}">
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+      </nav>
+
+      <div class="row">
+        <div class="col-md-4">
+          <div class="panel panel-primary">
+            <div class="panel-heading">
+              <h3 class="panel-title">Enter parameters</h3>
             </div>
+            <div class="panel-body">
+              <span tal:replace="structure form"/>
+            </div>
+          </div>
         </div>
-    
-        <script type="text/javascript">
-            deform.load()
-        </script>
-    </body>
+
+        <div class="col-md-4">
+          <div class="panel panel-success">
+            <div class="panel-heading">
+              <h3 class="panel-title">Top</h3>
+            </div>
+            <div class="panel-body">
+              <div>
+                <span tal:condition="not:exists: appstruct">
+                  <img class="img-responsive" src="${request.static_url('pdfexploder:assets/img/known_top_image.png')}">
+                </span>
+                <span tal:condition="exists: appstruct">
+                  <img class="img-responsive" src="${request.route_path('top_thumbnail', serial=appstruct['serial'])}">
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="col-md-4">
+          <div class="panel panel-success">
+            <div class="panel-heading">
+              <h3 class="panel-title">Mosaic</h3>
+            </div>
+            <div class="panel-body">
+              <div>
+                <span tal:condition="not:exists: appstruct">
+                  <img class="img-responsive" src="${request.static_url('pdfexploder:assets/img/known_mosaic_image.png')}">
+                </span>
+                <span tal:condition="exists: appstruct">
+                  <img class="img-responsive" src="${request.route_path('mosaic_thumbnail', serial=appstruct['serial'])}">
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual
+         files as needed -->
+    <script src="${request.static_url('pdfexploder:assets/js/bootstrap.min.js')}"></script>
+  </body>
 </html>
+

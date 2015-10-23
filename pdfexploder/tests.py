@@ -295,14 +295,14 @@ class FunctionalTests(unittest.TestCase):
         form.set("upload", Upload("resources/known_unittest.pdf"), 0)
         submit_res = form.submit("submit")
 
-        top_link = "img src=\"/top/ft789"
+        top_link = "src=\"/top/ft789"
         self.assertTrue(top_link in submit_res.body)
  
         res = self.testapp.get("/top/ft789")
         img_size = res.content_length
         self.assertTrue(size_range(img_size, 105238, ok_range=5000))
         
-        mosaic_link = "img src=\"/mosaic/ft789"
+        mosaic_link = "src=\"/mosaic/ft789"
         self.assertTrue(mosaic_link in submit_res.body)
 
         res = self.testapp.get("/mosaic/ft789")
