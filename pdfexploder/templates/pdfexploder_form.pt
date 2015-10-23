@@ -9,7 +9,7 @@
     <title>PDF Exploder web application</title>
 
     <!-- Bootstrap -->
-    <link href="${request.static_url('pdfexploder:assets/css/bootstrap.min.css')}" rel="stylesheet">
+    <link href="assets/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and
          media queries -->
@@ -21,23 +21,30 @@
     <![endif]-->
 
     <!-- faviconagraphy -->
-    <link rel="apple-touch-icon" sizes="57x57" href="${request.static_url('pdfexploder:assets/img/apple-icon-57x57.png')}">
-    <link rel="apple-touch-icon" sizes="60x60" href="${request.static_url('pdfexploder:assets/img/apple-icon-60x60.png')}">
-    <link rel="apple-touch-icon" sizes="72x72" href="${request.static_url('pdfexploder:assets/img/apple-icon-72x72.png')}">
-    <link rel="apple-touch-icon" sizes="76x76" href="${request.static_url('pdfexploder:assets/img/apple-icon-76x76.png')}">
-    <link rel="apple-touch-icon" sizes="114x114" href="${request.static_url('pdfexploder:assets/img/apple-icon-114x114.png')}">
-    <link rel="apple-touch-icon" sizes="120x120" href="${request.static_url('pdfexploder:assets/img/apple-icon-120x120.png')}">
-    <link rel="apple-touch-icon" sizes="144x144" href="${request.static_url('pdfexploder:assets/img/apple-icon-144x144.png')}">
-    <link rel="apple-touch-icon" sizes="152x152" href="${request.static_url('pdfexploder:assets/img/apple-icon-152x152.png')}">
-    <link rel="apple-touch-icon" sizes="180x180" href="${request.static_url('pdfexploder:assets/img/apple-icon-180x180.png')}">
-    <link rel="icon" type="image/png" sizes="192x192" href="${request.static_url('pdfexploder:assets/img/android-icon-192x192.png')}">
-    <link rel="icon" type="image/png" sizes="32x32" href="${request.static_url('pdfexploder:assets/img/favicon-32x32.png')}">
-    <link rel="icon" type="image/png" sizes="96x96" href="${request.static_url('pdfexploder:assets/img/favicon-96x96.png')}">
-    <link rel="icon" type="image/png" sizes="16x16" href="${request.static_url('pdfexploder:assets/img/favicon-16x16.png')}">
-    <link rel="manifest" href="${request.static_url('pdfexploder:assets/img/manifest.json')}">
+    <link rel="apple-touch-icon" sizes="57x57" href="assets/img/apple-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="assets/img/apple-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="assets/img/apple-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="assets/img/apple-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="assets/img/apple-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="assets/img/apple-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="assets/img/apple-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="assets/img/apple-icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/img/apple-icon-180x180.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/img/android-icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="assets/img/favicon-96x96.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/img/favicon-16x16.png">
+    <link rel="manifest" href="assets/img/manifest.json">
     <meta name="msapplication-TileColor" content="#ffffff">
-    <meta name="msapplication-TileImage" content="${request.static_url('pdfexploder:assets/img/ms-icon-144x144.png')}">
+    <meta name="msapplication-TileImage" content="assets/img/ms-icon-144x144.png">
     <meta name="theme-color" content="#ffffff">
+
+    <script>
+      function fadeIn(obj) {
+          $(obj).fadeIn(1000);
+      }
+    </script>
+
   </head>
   <body>
     <div class="container">
@@ -54,13 +61,28 @@
       </nav>
 
       <div class="row">
-        <div class="col-md-4">
+        <div class="col-md-5">
           <div class="panel panel-primary">
             <div class="panel-heading">
               <h3 class="panel-title">Enter parameters</h3>
             </div>
             <div class="panel-body">
               <span tal:replace="structure form"/>
+            </div>
+          </div>
+          <div class="panel panel-success">
+            <div class="panel-heading">
+              <h3 class="panel-title">Mosaic</h3>
+            </div>
+            <div class="panel-body">
+              <div>
+                <span tal:condition="not:exists: appstruct">
+                  <img onload="fadeIn(this)" style="display:none;" class="img-responsive" src="${request.static_url('pdfexploder:assets/img/known_mosaic_image.png')}">
+                </span>
+                <span tal:condition="exists: appstruct">
+                  <img onload="fadeIn(this)" style="display:none;" class="img-responsive" src="${request.route_path('mosaic_thumbnail', serial=appstruct['serial'])}">
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -73,29 +95,10 @@
             <div class="panel-body">
               <div>
                 <span tal:condition="not:exists: appstruct">
-                  <img class="img-responsive" src="${request.static_url('pdfexploder:assets/img/known_top_image.png')}">
+                  <img onload="fadeIn(this)" style="display:none;" class="img-responsive" src="${request.static_url('pdfexploder:assets/img/known_top_image.png')}">
                 </span>
                 <span tal:condition="exists: appstruct">
-                  <img class="img-responsive" src="${request.route_path('top_thumbnail', serial=appstruct['serial'])}">
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-
-        <div class="col-md-4">
-          <div class="panel panel-success">
-            <div class="panel-heading">
-              <h3 class="panel-title">Mosaic</h3>
-            </div>
-            <div class="panel-body">
-              <div>
-                <span tal:condition="not:exists: appstruct">
-                  <img class="img-responsive" src="${request.static_url('pdfexploder:assets/img/known_mosaic_image.png')}">
-                </span>
-                <span tal:condition="exists: appstruct">
-                  <img class="img-responsive" src="${request.route_path('mosaic_thumbnail', serial=appstruct['serial'])}">
+                  <img onload="fadeIn(this)" style="display:none;" class="img-responsive" src="${request.route_path('top_thumbnail', serial=appstruct['serial'])}">
                 </span>
               </div>
             </div>

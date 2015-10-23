@@ -6,7 +6,9 @@ Web service to create thumbnail views of PDF documents
 Display a responsive web form. With the pdf uploaded by the user,
 generate a variety of exploded page view thumbnails like those shown
 below. Store the pdf and thumbnail links forever with permanent links.
+Live demo at http://waspho.com:8082
 
+![PDFExploder screenshot](/resources/demo.gif "PDFExploder screenshot")
 
 Getting Started
 ---------------
