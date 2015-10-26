@@ -3,12 +3,6 @@
 import colander
 from deform import widget, FileData
 
-class EmptyThumbnails(object):
-    """ Helper class for empty thumbnails data structures.
-    """
-    serial = ""
-    pdf = ""
-
 class MemoryTmpStore(dict):
     """ Instances of this class implement the
     :class:`deform.interfaces.FileUploadTempStore` interface

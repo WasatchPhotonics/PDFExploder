@@ -4,11 +4,8 @@ necessary.
 """
 
 import os
-import shutil
 import random
 import logging
-
-from subprocess import Popen
 
 from wand.image import Image, Color
 

@@ -1,12 +1,11 @@
+""" pyramid views for the application
+"""
+
 import os
-import sys
 import shutil
 import logging
 
-import colander
-
-from pyramid.response import Response, FileResponse
-from pyramid.httpexceptions import HTTPNotFound
+from pyramid.response import FileResponse
 from pyramid.view import view_config
 
 from deform import Form
@@ -14,7 +13,7 @@ from deform.exception import ValidationFailure
 
 from slugify import slugify
 
-from pdfexploder.models import PDFUploadSchema, EmptyThumbnails
+from pdfexploder.models import PDFUploadSchema
 from pdfexploder.thumbnailgenerator import ThumbnailGenerator
 
 log = logging.getLogger(__name__)
@@ -50,7 +49,6 @@ class ThumbnailViews(object):
         along with the generated thumbnails.
         """
         form = Form(PDFUploadSchema(), buttons=("submit",))
-        data = EmptyThumbnails()
 
         if "submit" in self.request.POST:
             #log.info("submit: %s", self.request.POST)
@@ -65,9 +63,9 @@ class ThumbnailViews(object):
 
                 return {"form":rendered_form, "appstruct":appstruct}
 
-            except ValidationFailure as e: 
+            except ValidationFailure as exc: 
                 log.info("Validation failure")
-                return {'form':e.render()} 
+                return {'form':exc.render()} 
 
         return {"form":form.render()}
 

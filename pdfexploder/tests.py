@@ -39,7 +39,6 @@ class DeformMockFieldStorage(object):
         self.type = "file"
         self.length = os.path.getsize(self.filename)
 
-
 class TestCoverageUtils(unittest.TestCase):
     def test_file_does_not_exist(self):
         filename = "known_unknown_file"
@@ -307,4 +306,4 @@ class FunctionalTests(unittest.TestCase):
 
         res = self.testapp.get("/mosaic/ft789")
         img_size = res.content_length
-        self.assertTrue(size_range(img_size, 21000, ok_range=2000))
+        self.assertTrue(size_range(img_size, 21000, ok_range=4000))
