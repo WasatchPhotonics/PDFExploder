@@ -39,6 +39,8 @@
     <meta name="msapplication-TileImage" content="assets/img/ms-icon-144x144.png">
     <meta name="theme-color" content="#ffffff">
 
+    <link rel="stylesheet" href="assets/css/form.css" type="text/css">
+
     <script>
       function fadeIn(obj) {
           $(obj).fadeIn(1000);
@@ -113,6 +115,7 @@
     <!-- Include all compiled plugins (below), or include individual
          files as needed -->
     <script src="assets/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="assets/js/deform.js"></script>
   </body>
 </html>
 
