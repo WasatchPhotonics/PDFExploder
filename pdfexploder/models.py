@@ -26,7 +26,7 @@ class PDFUploadSchema(colander.Schema):
     csn = colander.SchemaNode
 
     serial = csn(colander.String(),
-                 validator=colander.Length(3, 10))
+                 validator=colander.Length(3, 50))
 
     # Based on: # http://stackoverflow.com/questions/6563546/\
     # how-to-make-file-upload-facultative-with-deform-and-colander

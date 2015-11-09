@@ -72,7 +72,7 @@ class TestThumbnailGenerator(unittest.TestCase):
         png_img = thumg.mosaic_thumbnail()
         # Image has randomized components
         self.assertTrue(size_range(len(png_img), 21000, ok_range=2000))
-
+        
 class TestThumbnailViews(unittest.TestCase):
     def setUp(self):
         # Clean any existing test files

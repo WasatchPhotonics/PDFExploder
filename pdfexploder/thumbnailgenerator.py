@@ -18,6 +18,7 @@ class ThumbnailGenerator(object):
     def __init__(self, filename):
         """ Require that the filename exists.
         """
+        self.dir_name = os.path.dirname(__file__)
         if not os.path.exists(filename):
             raise IOError("Can't find: %s" % filename)
 
@@ -40,7 +41,8 @@ class ThumbnailGenerator(object):
         then the reszied image on top of that.
         """
         
-        back_filename = "resources/mosaic_background.png"
+        back_filename = "%s/../resources/mosaic_background.png" \
+                        % self.dir_name
         back_img = Image(filename=back_filename)
 
         # From: # http://stackoverflow.com/questions/18821145/\
