@@ -15,7 +15,7 @@ class ThumbnailGenerator(object):
     """ Requires an existing pdf file for init, has methods for
     generating thumbnails of various sizes and types.
     """
-    def __init__(self, filename, blob=None):
+    def __init__(self, filename=None, blob=None):
         """ Require that the filename exists.
         """
         self.dir_name = os.path.dirname(__file__)
