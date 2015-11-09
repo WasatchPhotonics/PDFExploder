@@ -15,14 +15,18 @@ class ThumbnailGenerator(object):
     """ Requires an existing pdf file for init, has methods for
     generating thumbnails of various sizes and types.
     """
-    def __init__(self, filename):
+    def __init__(self, filename, blob=None):
         """ Require that the filename exists.
         """
         self.dir_name = os.path.dirname(__file__)
-        if not os.path.exists(filename):
-            raise IOError("Can't find: %s" % filename)
 
         self.filename = filename
+        self.blob = blob
+
+        if self.blob is None:
+            if not os.path.exists(filename):
+                raise IOError("Can't find: %s" % filename)
+
 
     def top_thumbnail(self):
         """ Read the filename specified during init, return a png file
@@ -47,7 +51,9 @@ class ThumbnailGenerator(object):
 
         # From: # http://stackoverflow.com/questions/18821145/\
         # wand-convert-pdf-to-jpeg-and-storing-pages-in-file-like-objects
-        image_pdf = Image(filename=self.filename)
+        image_pdf = Image(blob=self.blob)
+        if self.blob is None:
+            image_pdf = Image(filename=self.filename)
         image_png = image_pdf.convert("png")
         shift = 0
         for page_img in image_png.sequence:

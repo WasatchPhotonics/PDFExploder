@@ -72,7 +72,16 @@ class TestThumbnailGenerator(unittest.TestCase):
         png_img = thumg.mosaic_thumbnail()
         # Image has randomized components
         self.assertTrue(size_range(len(png_img), 21000, ok_range=2000))
-        
+       
+    def test_mosaic_thumbnail_from_blob(self):
+        filename = "resources/known_unittest.pdf"
+        pdf_file = open(filename)
+        thumb = ThumbnailGenerator(filename="required", 
+                                   blob=pdf_file.read())
+        png_img = thumb.mosaic_thumbnail()
+        # Image has randomized components
+        self.assertTrue(size_range(len(png_img), 21000, ok_range=2000))
+     
 class TestThumbnailViews(unittest.TestCase):
     def setUp(self):
         # Clean any existing test files
