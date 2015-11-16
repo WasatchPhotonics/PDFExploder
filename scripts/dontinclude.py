@@ -10,5 +10,8 @@ log.addHandler(strm)
 
 from pdfexploder.coverageutils import file_range, size_range
 
+def shouldbenotcovered():
+    log.info("not covered")
+
 if __name__ == "__main__":
     log.info("in dontinclude main")

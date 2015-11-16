@@ -15,7 +15,7 @@ from slugify import slugify
 
 from coverageutils import file_range, size_range
 from pdfexploder.thumbnailgenerator import ThumbnailGenerator
-
+from scripts import dontinclude
 
 # Specify stdout as the logging output stream to reduce verbosity in the
 # nosetest output. This will let you still see all of logging when
