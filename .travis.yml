@@ -6,5 +6,6 @@ install:
   - pip install coveralls
   - "python setup.py develop"
 # command to run tests
-script: nosetests --cover-erase --with-coverage --cover-package=pdfexploder 
+script: 
+  - py.test --cov=pdfexploder pdfexploder/tests.py
 after_success: coveralls
