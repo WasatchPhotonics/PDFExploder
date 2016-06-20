@@ -11,9 +11,8 @@ Live demo at http://waspho.com:8082
 ![PDFExploder screenshot](/resources/demo.gif "PDFExploder screenshot")
 
 
-Getting Started
----------------
-
+VirtualEnv Installation
+-----------------------
     Create a python virtual environment
     sudo dnf install freetype-devel
     sudo dnf install gcc
@@ -21,11 +20,20 @@ Getting Started
     sudo dnf install zlib-devel
     sudo dnf install ImageMagick-devel
 
+Conda Installation
+------------------
+    conda create -n cookbook pyramid
+    source activate cookbook
+    conda install pillow pytest-cov
+
+
+Setup and Tests
+---------------
 - cd _directory containing this file_
 
 - $VENV/bin/python setup.py develop
 
-- $VENV/bin/nosetests --cover-erase --with-coverage --cover-package=stickercode
+- $VENV/bin/nosetests --cover-erase --with-coverage --cover-package=pdfexploder
 
 - $VENV/bin/pserve config/development.ini
 
